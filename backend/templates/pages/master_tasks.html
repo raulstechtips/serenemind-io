@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Master Task Library{% endblock %}
+
+{% block content %}
+<!-- Master Task Library Page -->
+<div x-data="{ init() { $store.taskManager.init() } }" class="max-w-6xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <!-- Title & Description -->
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Master Task Library</h1>
+                <p class="text-gray-600">
+                    Manage your task definitions that can be used in templates
+                </p>
+            </div>
+            
+            <!-- Add Task Button -->
+            <button 
+                @click="$store.taskManager.createTask()"
+                type="button"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors shadow-sm"
+            >
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Task
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search & Filter Bar -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center gap-3">
+            <!-- Search Icon -->
+            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            
+            <!-- Search Input -->
+            <input 
+                type="text" 
+                x-model="$store.taskManager.searchQuery"
+                placeholder="Search tasks by title..."
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+            
+            <!-- Clear Search Button -->
+            <button 
+                x-show="$store.taskManager.searchQuery.length > 0"
+                @click="$store.taskManager.clearSearch()"
+                type="button"
+                class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Clear search"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Task Count -->
+        <div x-show="$store.taskManager.hasTasks" class="mt-2 text-sm text-gray-600">
+            Showing <span class="font-medium" x-text="$store.taskManager.taskCount"></span> 
+            <span x-text="$store.taskManager.taskCount === 1 ? 'task' : 'tasks'"></span>
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <template x-if="$store.taskManager.loading">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+            <div class="flex flex-col items-center justify-center">
+                <!-- Spinner -->
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary-600 mb-4"></div>
+                <p class="text-gray-600">Loading tasks...</p>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Error State -->
+    <template x-if="$store.taskManager.error && !$store.taskManager.loading">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-red-900 mb-1">Error Loading Tasks</h3>
+                    <p class="text-red-800 mb-3" x-text="$store.taskManager.error"></p>
+                    <button 
+                        @click="$store.taskManager.loadTasks()"
+                        type="button"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Retry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Task List -->
+    <template x-if="!$store.taskManager.loading && !$store.taskManager.error">
+        <div>
+            <!-- Empty State - No Tasks at All -->
+            <template x-if="!$store.taskManager.hasTasks">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+                    <div class="text-center">
+                        <!-- Icon -->
+                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Tasks Yet</h3>
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                            Get started by creating your first task. Tasks are the building blocks for your templates.
+                        </p>
+                        
+                        <button 
+                            @click="$store.taskManager.createTask()"
+                            type="button"
+                            class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors shadow-sm"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Create Your First Task
+                        </button>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Empty State - No Search Results -->
+            <template x-if="$store.taskManager.hasTasks && !$store.taskManager.hasResults">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+                    <div class="text-center">
+                        <!-- Icon -->
+                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Results Found</h3>
+                        <p class="text-gray-600 mb-4">
+                            No tasks match "<span class="font-medium" x-text="$store.taskManager.searchQuery"></span>"
+                        </p>
+                        
+                        <button 
+                            @click="$store.taskManager.clearSearch()"
+                            type="button"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                        >
+                            Clear Search
+                        </button>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Task List Grid -->
+            <template x-if="$store.taskManager.hasResults">
+                <div class="space-y-4">
+                    <template x-for="task in $store.taskManager.filteredTasks" :key="task.id">
+                        <div>
+                            {% include 'components/task_item.html' %}
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Include Modal Components -->
+{% include 'components/modal_create_task.html' %}
+{% include 'components/modal_confirm.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load Master Task Library Component -->
+<script src="{% static 'js/components/masterTaskLibrary.js' %}"></script>
+{% endblock %}
+

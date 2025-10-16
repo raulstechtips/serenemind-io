@@ -1,0 +1,47 @@
+<!-- Task List Sortable Component
+     IMPORTANT: This should be used inline in pages, not as a static include!
+     
+     Example usage (copy this into your page):
+     
+     <div x-data="taskListSortable({
+         items: $store.dashboard.tasks,
+         onSave: async (tasks) => {
+             const promises = tasks.map(task => 
+                 $store.dashboard.updateTaskOrder(task.id, task.order)
+             );
+             await Promise.all(promises);
+             window.showToast('Task order saved!', 'success');
+         }
+     })">
+         <div x-ref="sortableList" class="space-y-2">
+             <template x-for="task in items" :key="task.id">
+                 <div>{ include 'components/task_card.html' }</div>
+             </template>
+         </div>
+         
+         <div x-show="hasChanges" class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+             <div class="flex justify-between items-center">
+                 <span class="text-yellow-800">You have unsaved changes</span>
+                 <div class="flex gap-2">
+                     <button @click="cancel()">Cancel</button>
+                     <button @click="save()" :disabled="isSaving">
+                         <span x-show="!isSaving">Save Changes</span>
+                         <span x-show="isSaving">Saving...</span>
+                     </button>
+                 </div>
+             </div>
+         </div>
+     </div>
+     
+     NOTE: The taskListSortable component is defined in:
+     /workspace/backend/static_project/js/components/taskListSortable.js
+-->
+
+<div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+    <p class="text-yellow-800 font-semibold mb-2">⚠️ This is a template placeholder</p>
+    <p class="text-yellow-700 text-sm">
+        The task_list_sortable.html should not be included directly. 
+        Use the taskListSortable component inline in your page instead.
+        See the comments in this file for usage example.
+    </p>
+</div>

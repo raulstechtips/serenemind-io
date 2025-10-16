@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}ADHD System Manager{% endblock %}</title>
+    
+    <!-- Tailwind CSS v4.0 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    
+    <!-- Additional CSS blocks for specific pages -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 antialiased">
+    <!-- Global Page Loading Overlay -->
+    <div 
+        id="page-loading-overlay" 
+        class="fixed inset-0 z-[100] bg-gray-50 flex items-center justify-center"
+        style="display: none;">
+        <div class="text-center">
+            <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-600 font-medium">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Main Content Area (NO sidebar/topbar) -->
+    <main class="min-h-screen flex flex-col">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <!-- Toast Notifications -->
+    {% include 'components/toast_notification.html' %}
+
+    <!-- Global Utilities -->
+    <script src="{% static 'js/utils/global.js' %}"></script>
+    
+    <!-- Auth Store -->
+    <script src="{% static 'js/components/authStore.js' %}"></script>
+    
+    <!-- Additional JavaScript blocks for specific pages (loaded before Alpine) -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Alpine.js 3.x for reactive components (loaded LAST) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Hide loading overlay when page is ready -->
+    <script>
+        // Hide loading overlay when Alpine is initialized
+        document.addEventListener('alpine:init', () => {
+            setTimeout(() => {
+                const overlay = document.getElementById('page-loading-overlay');
+                if (overlay) {
+                    overlay.style.transition = 'opacity 0.3s ease-out';
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 300);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+

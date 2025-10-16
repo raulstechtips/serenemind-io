@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Templates{% endblock %}
+
+{% block extra_css %}
+<style>
+  [x-cloak] {
+    display: none !important;
+  }
+  
+  .drag-handle {
+    cursor: grab;
+    touch-action: none;
+  }
+  
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+  
+  .sortable-ghost {
+    opacity: 0.4;
+    background-color: #e5e7eb;
+  }
+  
+  .sortable-drag {
+    cursor: grabbing;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Templates Page -->
+<div x-data="{ init() { $store.templateManager.init() } }" class="max-w-7xl mx-auto">
+  
+  <!-- Header -->
+  <div class="mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">System Templates</h1>
+        <p class="mt-1 text-sm sm:text-base text-gray-600">Manage your routine templates and weekly schedule</p>
+      </div>
+      <button
+        @click="$store.templateManager.openCreateModal()"
+        type="button"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        New Template
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div
+    x-show="$store.templateManager.successMessage"
+    x-transition
+    class="mb-4">
+    <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      <span x-text="$store.templateManager.successMessage"></span>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div
+    x-show="$store.templateManager.error"
+    x-transition
+    class="mb-4">
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+      </svg>
+      <span x-text="$store.templateManager.error"></span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div x-show="$store.templateManager.loading">
+    <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+      <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <p class="mt-2 text-gray-600">Loading templates...</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div x-show="!$store.templateManager.loading" class="space-y-6">
+    
+    <!-- Weekly Overview Section -->
+    <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Weekly Overview</h2>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
+        <template x-for="weekday in $store.templateManager.weekdays" :key="weekday">
+          <div>
+            <div
+              @click="$store.templateManager.selectTemplateByWeekday(weekday)"
+              class="text-center p-3 sm:p-4 rounded-lg border-2 transition-all cursor-pointer"
+              :class="$store.templateManager.weeklyOverview[weekday] ? 'border-blue-500 bg-blue-50 hover:bg-blue-100' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300'">
+              <div class="font-semibold text-xs sm:text-sm text-gray-700 mb-1 sm:mb-2" x-text="$store.templateManager.getWeekdayShort(weekday)"></div>
+              <template x-if="$store.templateManager.weeklyOverview[weekday]">
+                <div>
+                  <div class="text-xs text-blue-600 font-medium truncate" x-text="$store.templateManager.weeklyOverview[weekday].title"></div>
+                  <div class="text-xs text-gray-500 mt-1" x-text="$store.templateManager.weeklyOverview[weekday].taskCount + ' tasks'"></div>
+                </div>
+              </template>
+              <template x-if="!$store.templateManager.weeklyOverview[weekday]">
+                <div class="text-xs text-gray-400">No template<br class="hidden sm:inline">Click to create</div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Template Details Section -->
+    <div>
+      <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+        
+        <!-- Empty State -->
+        <div x-show="!$store.templateManager.hasTemplates" class="text-center py-12 text-gray-500">
+          <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <p class="text-lg">No templates yet</p>
+          <p class="text-sm mt-1">Create your first template to get started</p>
+        </div>
+
+        <!-- Template Cards Grid -->
+        <div x-show="$store.templateManager.hasTemplates" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <template x-for="template in $store.templateManager.templates" :key="template.id">
+            <div class="border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all">
+              <!-- Card Header -->
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900" x-text="template.title"></h3>
+                  <p class="text-xs text-gray-500 mt-1" x-text="$store.templateManager.formatWeekdays(template.weekdays)"></p>
+                </div>
+              </div>
+              
+              <!-- Task Count -->
+              <div class="mb-4">
+                <p class="text-sm text-gray-600">
+                  <span x-text="(template.tasks ? template.tasks.length : 0)"></span> 
+                  <span x-text="(template.tasks && template.tasks.length === 1) ? 'task' : 'tasks'"></span>
+                </p>
+              </div>
+              
+              <!-- Actions -->
+              <div class="flex items-center gap-2">
+                <button
+                  @click="$store.templateManager.openEditModal(template)"
+                  class="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  Edit
+                </button>
+                <button
+                  @click="$store.templateManager.openDeleteModal(template)"
+                  class="flex-1 px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Template Builder Modal -->
+{% include 'components/modal_template_builder.html' %}
+
+<!-- Create Task Modal (shared with template builder) -->
+{% include 'components/modal_create_task.html' %}
+
+<!-- Reusable Confirmation Modal -->
+{% include 'components/modal_confirm.html' %}
+
+<!-- Toast Notifications -->
+{% include 'components/toast_notification.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Page-specific stores (load BEFORE Alpine.js) -->
+<script src="{% static 'js/components/templateBuilder.js' %}"></script>
+<script src="{% static 'js/components/templateManager.js' %}"></script>
+{% endblock %}

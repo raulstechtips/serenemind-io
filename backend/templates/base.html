@@ -1,0 +1,190 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Task Manager{% endblock %}</title>
+    
+    <!-- Tailwind CSS v4.0 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Heroicons (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/2.0.18/outline.min.css">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    
+    <!-- Additional CSS blocks for specific pages -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 antialiased">
+    <!-- Global Page Loading Overlay -->
+    <div 
+        id="page-loading-overlay" 
+        class="fixed inset-0 z-[100] bg-gray-50 flex items-center justify-center"
+        style="display: flex;">
+        <div class="text-center">
+            <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-600 font-medium">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Sidebar Layout -->
+    <div x-data="{ sidebarOpen: window.innerWidth >= 768 }" class="flex h-screen overflow-hidden" style="opacity: 0;" id="main-content">
+        <!-- Sidebar -->
+        {% include 'components/sidebar.html' %}
+        
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            {% include 'components/topbar.html' %}
+            
+            <!-- Page Content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6 lg:p-8">
+                <!-- Page Content -->
+                {% block content %}
+                {% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            {% block footer %}
+            {% endblock %}
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    {% block modals %}
+    {% endblock %}
+    
+    <!-- Toast Notifications -->
+    {% include 'components/toast_notification.html' %}
+
+    <!-- JavaScript Libraries -->
+    <!-- SortableJS for drag-and-drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <!-- Utility Scripts -->
+    <script src="{% static 'js/utils/dates.js' %}"></script>
+    <script src="{% static 'js/utils/ordering.js' %}"></script>
+    <script src="{% static 'js/utils/global.js' %}"></script>
+    
+    <!-- API Client -->
+    <script src="{% static 'js/api.js' %}"></script>
+    
+    <!-- Reusable Components -->
+    <script src="{% static 'js/components/taskListSortable.js' %}"></script>
+    
+    <!-- Auth Store -->
+    <script src="{% static 'js/components/authStore.js' %}"></script>
+    
+    <!-- Additional JavaScript blocks for specific pages (loaded before Alpine) -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Pass Django user data to Alpine.js authStore -->
+    {% if request.user.is_authenticated %}
+    <script>
+        // Set user data in auth store when Alpine initializes
+        document.addEventListener('alpine:init', () => {
+            if (Alpine.store('auth')) {
+                Alpine.store('auth').setUser({
+                    email: '{{ request.user.email|escapejs }}',
+                    first_name: '{{ request.user.first_name|escapejs }}',
+                    last_name: '{{ request.user.last_name|escapejs }}',
+                    avatar: '{% if request.user.profile.avatar %}{{ request.user.profile.avatar.url|escapejs }}{% endif %}',
+                    full_name: '{{ request.user.get_full_name|escapejs }}'
+                });
+            }
+        });
+    </script>
+    {% endif %}
+    
+    <!-- Alpine.js 3.x for reactive components (loaded LAST so components are defined first) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Global Page Loading Handler -->
+    <script>
+        let pageLoadingHidden = false;
+        
+        // Global function for stores to call when ready
+        window.hidePageLoading = function() {
+            if (pageLoadingHidden) return;
+            pageLoadingHidden = true;
+            
+            const overlay = document.getElementById('page-loading-overlay');
+            const mainContent = document.getElementById('main-content');
+            
+            if (overlay && mainContent) {
+                // Fade out overlay
+                overlay.style.transition = 'opacity 0.3s ease-out';
+                overlay.style.opacity = '0';
+                
+                // Fade in main content
+                mainContent.style.transition = 'opacity 0.3s ease-in';
+                mainContent.style.opacity = '1';
+                
+                // Hide overlay after animation (don't remove, so it can be reused)
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+        };
+        
+        // Hide loading overlay when Alpine is initialized
+        document.addEventListener('alpine:init', () => {
+            // Give Alpine stores a moment to initialize
+            // If a page has a store, it should call hidePageLoading() when ready
+            // Otherwise, hide after a short delay
+            setTimeout(() => {
+                if (!pageLoadingHidden) {
+                    window.hidePageLoading();
+                }
+            }, 500);
+        });
+        
+        // Fallback: Hide after max 2 seconds if Alpine doesn't initialize
+        setTimeout(() => {
+            if (!pageLoadingHidden) {
+                const overlay = document.getElementById('page-loading-overlay');
+                const mainContent = document.getElementById('main-content');
+                if (overlay && mainContent) {
+                    overlay.style.display = 'none';
+                    mainContent.style.opacity = '1';
+                    pageLoadingHidden = true;
+                }
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

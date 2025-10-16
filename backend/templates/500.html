@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | Task Manager</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        
+        .glitch-animation {
+            animation: glitch 0.3s ease-in-out;
+        }
+        
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-gray-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="max-w-2xl w-full">
+        <div class="bg-white rounded-2xl shadow-xl p-8 sm:p-12 text-center">
+            
+            <!-- Animated Error Icon -->
+            <div class="mb-8">
+                <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-purple-50 to-purple-100 border-4 border-purple-200 relative">
+                    <svg class="w-16 h-16 text-purple-600 spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Error Code -->
+            <div class="mb-4">
+                <h1 class="text-6xl sm:text-7xl font-bold text-gray-900 mb-2">500</h1>
+                <div class="h-1 w-20 bg-gradient-to-r from-purple-400 to-purple-600 mx-auto rounded-full"></div>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="mb-8">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-3">Server Error</h2>
+                <p class="text-gray-600 text-base sm:text-lg max-w-md mx-auto">
+                    Oops! Something went wrong on our end. Our team has been notified and we're working to fix it.
+                </p>
+            </div>
+            
+            <!-- Info Box -->
+            <div class="mb-8 bg-purple-50 border border-purple-200 rounded-lg p-4 max-w-md mx-auto">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div class="text-left">
+                        <p class="text-sm font-medium text-purple-800 mb-1">What can I do?</p>
+                        <p class="text-xs text-purple-700">Try coming back in a few minutes. If the problem persists, please contact support.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a 
+                    href="/" 
+                    class="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 w-full sm:w-auto"
+                >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                    Go to Dashboard
+                </a>
+                
+                <!-- <button 
+                    onclick="window.history.back()" 
+                    class="inline-flex items-center justify-center px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all w-full sm:w-auto"
+                >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Go Back
+                </button> -->
+            </div>
+            
+            <!-- Help Text -->
+            <!-- <div class="mt-10 pt-8 border-t border-gray-200">
+                <p class="text-sm text-gray-500">
+                    Error code: <span class="font-mono text-gray-700">500</span> • 
+                    <a href="/" class="text-blue-600 hover:text-blue-700 font-medium hover:underline">Contact support</a>
+                </p>
+            </div> -->
+        </div>
+        
+        <!-- Additional Links -->
+        <!-- <div class="mt-6 text-center">
+            <div class="inline-flex items-center gap-6 text-sm text-gray-600">
+                <a href="/" class="hover:text-blue-600 transition-colors">Dashboard</a>
+                <span class="text-gray-400">•</span>
+                <button onclick="location.reload()" class="hover:text-blue-600 transition-colors">Refresh</button>
+                <span class="text-gray-400">•</span>
+                <button onclick="window.history.back()" class="hover:text-blue-600 transition-colors">Go Back</button>
+            </div>
+        </div> -->
+    </div>
+    
+</body>
+</html>
+

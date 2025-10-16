@@ -1,0 +1,117 @@
+<!-- Adhoc Task Card Component
+     Displays a single adhoc task with edit/delete buttons and overdue indicators
+     Same structure as task_card.html but with additional actions
+     
+     Required context:
+     - task: Task object with {id, title, due_date, completed, is_adhoc}
+     
+     Usage:
+     <template x-for="task in $store.adhocTasks.tasks" :key="task.id">
+         <div>{ include 'components/adhoc_task_card.html' }</div>
+     </template>
+-->
+
+<div class="flex items-start gap-3 p-4 bg-white border-2 rounded-lg hover:border-gray-300 transition-all"
+     :class="{
+         'border-red-300 bg-red-50': $store.adhocTasks.isOverdue(task) && !task.completed,
+         'border-yellow-300 bg-yellow-50': $store.adhocTasks.isDueToday(task) && !task.completed,
+         'border-gray-200': !$store.adhocTasks.isOverdue(task) && !$store.adhocTasks.isDueToday(task),
+         'opacity-60': task.completed
+     }">
+    
+    <!-- Drag Handle -->
+    <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 pt-0.5"
+         title="Drag to reorder">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                  d="M4 8h16M4 16h16"/>
+        </svg>
+    </span>
+    
+    <!-- Checkbox -->
+    <div class="flex-shrink-0 pt-0.5">
+        <label class="flex items-center cursor-pointer">
+            <input 
+                type="checkbox" 
+                :checked="task.completed"
+                @change="$store.adhocTasks.toggleComplete(task)"
+                class="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 cursor-pointer transition-all"
+            >
+        </label>
+    </div>
+    
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+        <!-- Overdue Badge -->
+        <template x-if="$store.adhocTasks.isOverdue(task) && !task.completed">
+            <div class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full mb-2">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                Overdue
+            </div>
+        </template>
+        
+        <!-- Due Today Badge -->
+        <template x-if="$store.adhocTasks.isDueToday(task) && !task.completed && !$store.adhocTasks.isOverdue(task)">
+            <div class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full mb-2">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>
+                Due Today
+            </div>
+        </template>
+        
+        <!-- Task Title -->
+        <p class="text-sm font-medium text-gray-900"
+           :class="{ 'line-through text-gray-500': task.completed }"
+           x-text="task.title">
+        </p>
+        
+        <!-- Due Date -->
+        <div class="flex items-center gap-1 mt-1 text-xs"
+             :class="{
+                 'text-red-600 font-medium': $store.adhocTasks.isOverdue(task) && !task.completed,
+                 'text-yellow-600 font-medium': $store.adhocTasks.isDueToday(task) && !task.completed,
+                 'text-gray-500': !$store.adhocTasks.isOverdue(task) && !$store.adhocTasks.isDueToday(task)
+             }">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span x-text="$store.adhocTasks.formatDueDate(task.due_date)"></span>
+        </div>
+        
+        <!-- Completion Timestamp -->
+        <template x-if="task.completed && task.completed_at">
+            <p class="text-xs text-gray-400 mt-1">
+                Completed at <span x-text="new Date(task.completed_at).toLocaleString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit' 
+                })"></span>
+            </p>
+        </template>
+    </div>
+    
+    <!-- Actions -->
+    <div class="flex-shrink-0 flex gap-2 pt-0.5">
+        <button @click="$store.adhocTasks.openEditModal(task)"
+                class="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                title="Edit task">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+        </button>
+        <button @click="$store.adhocTasks.deleteTask(task)"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Delete task">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </button>
+    </div>
+</div>

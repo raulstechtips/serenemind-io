@@ -1,0 +1,156 @@
+<!-- Weekday Picker Component -->
+<!-- 
+  Usage: Include in a form/modal with x-model binding for selected weekdays
+  Props expected in parent Alpine component:
+  - selectedWeekdays: Array of selected weekday strings
+  - disabledWeekdays: Array of weekdays that are already assigned to other templates
+-->
+
+<div class="space-y-2">
+  <label class="block text-sm font-medium text-gray-700">
+    Assign Weekdays:
+  </label>
+  
+  <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <!-- Monday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Monday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Monday') && !selectedWeekdays.includes('Monday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Monday') && !disabledWeekdays.includes('Monday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Monday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Monday') && !selectedWeekdays.includes('Monday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Monday') ? 'text-blue-700' : 'text-gray-700'">
+        Mon
+      </span>
+    </label>
+
+    <!-- Tuesday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Tuesday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Tuesday') && !selectedWeekdays.includes('Tuesday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Tuesday') && !disabledWeekdays.includes('Tuesday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Tuesday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Tuesday') && !selectedWeekdays.includes('Tuesday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Tuesday') ? 'text-blue-700' : 'text-gray-700'">
+        Tue
+      </span>
+    </label>
+
+    <!-- Wednesday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Wednesday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Wednesday') && !selectedWeekdays.includes('Wednesday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Wednesday') && !disabledWeekdays.includes('Wednesday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Wednesday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Wednesday') && !selectedWeekdays.includes('Wednesday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Wednesday') ? 'text-blue-700' : 'text-gray-700'">
+        Wed
+      </span>
+    </label>
+
+    <!-- Thursday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Thursday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Thursday') && !selectedWeekdays.includes('Thursday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Thursday') && !disabledWeekdays.includes('Thursday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Thursday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Thursday') && !selectedWeekdays.includes('Thursday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Thursday') ? 'text-blue-700' : 'text-gray-700'">
+        Thu
+      </span>
+    </label>
+
+    <!-- Friday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Friday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Friday') && !selectedWeekdays.includes('Friday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Friday') && !disabledWeekdays.includes('Friday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Friday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Friday') && !selectedWeekdays.includes('Friday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Friday') ? 'text-blue-700' : 'text-gray-700'">
+        Fri
+      </span>
+    </label>
+
+    <!-- Saturday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Saturday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Saturday') && !selectedWeekdays.includes('Saturday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Saturday') && !disabledWeekdays.includes('Saturday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Saturday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Saturday') && !selectedWeekdays.includes('Saturday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Saturday') ? 'text-blue-700' : 'text-gray-700'">
+        Sat
+      </span>
+    </label>
+
+    <!-- Sunday -->
+    <label 
+      class="flex items-center space-x-2 p-3 border rounded-lg cursor-pointer transition-all"
+      :class="{
+        'bg-blue-50 border-blue-500': selectedWeekdays.includes('Sunday'),
+        'bg-gray-50 border-gray-300 opacity-50 cursor-not-allowed': disabledWeekdays.includes('Sunday') && !selectedWeekdays.includes('Sunday'),
+        'hover:bg-gray-50 border-gray-300': !selectedWeekdays.includes('Sunday') && !disabledWeekdays.includes('Sunday')
+      }">
+      <input 
+        type="checkbox" 
+        value="Sunday"
+        x-model="selectedWeekdays"
+        :disabled="disabledWeekdays.includes('Sunday') && !selectedWeekdays.includes('Sunday')"
+        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+      <span class="text-sm font-medium" :class="selectedWeekdays.includes('Sunday') ? 'text-blue-700' : 'text-gray-700'">
+        Sun
+      </span>
+    </label>
+  </div>
+
+  <!-- Helper text for disabled weekdays -->
+  <template x-if="disabledWeekdays.length > 0">
+    <p class="text-xs text-gray-500 mt-2">
+      Grayed out days are already assigned to other templates
+    </p>
+  </template>
+</div>
+
