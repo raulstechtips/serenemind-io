@@ -110,8 +110,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 SQL_DATABASE = os.environ.get("SQL_DATABASE")
-SQL_USER = os.environ.get("SQL_USER")
-SQL_PASSWORD = os.environ.get("SQL_PASSWORD")
+SQL_USER = os.environ.get("username") if APP_ENV in ["stage", "dev"] else os.environ.get("SQL_USER")
+SQL_PASSWORD = os.environ.get("password") if APP_ENV in ["stage"] else os.environ.get("SQL_PASSWORD")
 SQL_HOST = os.environ.get("SQL_HOST")
 
 required_database = {
