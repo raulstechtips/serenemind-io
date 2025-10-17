@@ -69,6 +69,14 @@ const api = {
             }
         }
         
+        // Fallback to DOM input field (from {% csrf_token %})
+        if (!cookieValue) {
+            const input = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (input) {
+                cookieValue = input.value;
+            }
+        }
+        
         // Fallback to meta tag
         if (!cookieValue) {
             const metaTag = document.querySelector('meta[name="csrf-token"]');
