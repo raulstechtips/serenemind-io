@@ -59,7 +59,7 @@ INSTALLED_APPS = [
 
     # "drf_spectacular",
     # "rest_framework",
-    # "corsheaders",
+    "corsheaders",
     # "rest_framework_simplejwt",
 
     # Allauth

@@ -33,6 +33,7 @@ function defineAuthStore() {
                     headers: {
                         'X-CSRFToken': this.getCsrfToken()
                     },
+                    credentials: 'same-origin',
                     redirect: 'manual' // Don't auto-follow redirects
                 });
                 
@@ -85,6 +86,7 @@ function defineAuthStore() {
                     headers: {
                         'X-CSRFToken': this.getCsrfToken()
                     },
+                    credentials: 'same-origin',
                     redirect: 'manual'
                 });
                 
@@ -127,6 +129,7 @@ function defineAuthStore() {
                     headers: {
                         'X-CSRFToken': this.getCsrfToken()
                     },
+                    credentials: 'same-origin',
                     redirect: 'manual'
                 });
                 

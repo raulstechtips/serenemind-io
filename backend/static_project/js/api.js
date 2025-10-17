@@ -55,37 +55,9 @@ const api = {
      * @returns {string} - CSRF token
      */
     getCsrfToken() {
-        // Try to get from cookie first
-        const name = 'csrftoken';
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        
-        // Fallback to DOM input field (from {% csrf_token %})
-        if (!cookieValue) {
-            const input = document.querySelector('[name=csrfmiddlewaretoken]');
-            if (input) {
-                cookieValue = input.value;
-            }
-        }
-        
-        // Fallback to meta tag
-        if (!cookieValue) {
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (metaTag) {
-                cookieValue = metaTag.getAttribute('content');
-            }
-        }
-        
-        return cookieValue;
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+               document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+               '';
     },
     
     // ==========================================
