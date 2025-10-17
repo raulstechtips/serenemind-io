@@ -434,6 +434,8 @@ if APP_ENV in ["prod", "stage"]:
         # 'app.raulstechtips.dev',
     ]
 
+    CORS_ALLOW_CREDENTIALS = True
+    
     # CSRF Trusted Origins - ADD THIS SECTION
     CSRF_TRUSTED_ORIGINS = [
         group.strip() for group in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if group.strip()
