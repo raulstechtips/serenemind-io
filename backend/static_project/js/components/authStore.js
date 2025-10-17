@@ -27,21 +27,12 @@ function defineAuthStore() {
             this.loading = true;
             
             try {
-                const response = await fetch('/auth/login/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': this.getCsrfToken()
-                    },
-                    credentials: 'same-origin',
-                    redirect: 'manual' // Don't auto-follow redirects
-                });
+                const response = await api.login(formData);
                 
                 // Check for successful login
                 // Django Allauth redirects on success, returns 200 with errors on failure
                 if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 0) {
                     // Login successful - redirect happened
-                    // Note: We can't read response body on redirect, so we'll show toast after page loads
                     window.location.href = '/'; // Dashboard
                     return;
                 }
@@ -64,9 +55,6 @@ function defineAuthStore() {
                     window.showToast('Login failed. Please try again.', 'error');
                 }
                 
-                // Could parse specific errors from HTML and display them inline
-                // For now, we'll just show a toast
-                
             } catch (error) {
                 console.error('Login error:', error);
                 window.showToast('An error occurred. Please try again.', 'error');
@@ -81,29 +69,18 @@ function defineAuthStore() {
             this.showPageLoadingOverlay();
             
             try {
-                const response = await fetch('/auth/logout/', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': this.getCsrfToken()
-                    },
-                    credentials: 'same-origin',
-                    redirect: 'manual'
-                });
+                await api.logout();
                 
                 // Logout is almost always successful
                 // Clear user data immediately
                 this.user = null;
                 this.isAuthenticated = false;
                 
-                
-                
                 // Show success toast
                 window.showToast('Logged out successfully', 'success', 3000);
                 
                 // Redirect to login page after showing toast
                 setTimeout(() => {
-                    // Hide loading overlay
-                    
                     window.location.href = '/auth/login/';
                 }, 1500);
                 
@@ -118,20 +95,12 @@ function defineAuthStore() {
             }
         },
         
-        // ============ SIGNUP METHOD (Future) ============
+        // ============ SIGNUP METHOD ============
         async signup(formData) {
             this.loading = true;
             
             try {
-                const response = await fetch('/auth/signup/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': this.getCsrfToken()
-                    },
-                    credentials: 'same-origin',
-                    redirect: 'manual'
-                });
+                const response = await api.signup(formData);
                 
                 // Similar pattern to login
                 if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 0) {
@@ -171,16 +140,6 @@ function defineAuthStore() {
         },
         
         // ============ HELPER METHODS ============
-        
-        /**
-         * Get CSRF token from form or meta tag
-         * @returns {string} CSRF token
-         */
-        getCsrfToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                   document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                   '';
-        },
         
         /**
          * Set user data (called from Django template context)

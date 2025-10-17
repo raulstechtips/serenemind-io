@@ -51,18 +51,85 @@ const api = {
     },
     
     /**
-     * Get CSRF token from cookies or meta tag
+     * Get CSRF token from cookie (SINGLE SOURCE OF TRUTH)
+     * Always reads from cookie as Django keeps this updated.
+     * Do not read from DOM or meta tags as they can become stale.
      * @returns {string} - CSRF token
      */
     getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-               document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-               '';
+        const name = 'csrftoken';
+        let cookieValue = null;
+        
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Check if this cookie string begins with the name we want
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        
+        return cookieValue || '';
     },
     
     // ==========================================
     // AUTHENTICATION ENDPOINTS
     // ==========================================
+    
+    /**
+     * Login user
+     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
+     * @param {FormData} formData - Form data with login credentials
+     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     */
+    async login(formData) {
+        return fetch('/auth/login/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': this.getCsrfToken()
+            },
+            credentials: 'same-origin',
+            redirect: 'manual'
+        });
+    },
+    
+    /**
+     * Signup user
+     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
+     * @param {FormData} formData - Form data with signup information
+     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     */
+    async signup(formData) {
+        return fetch('/auth/signup/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': this.getCsrfToken()
+            },
+            credentials: 'same-origin',
+            redirect: 'manual'
+        });
+    },
+    
+    /**
+     * Logout user
+     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
+     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     */
+    async logout() {
+        return fetch('/auth/logout/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': this.getCsrfToken()
+            },
+            credentials: 'same-origin',
+            redirect: 'manual'
+        });
+    },
     
     /**
      * Get current user profile
