@@ -222,6 +222,15 @@ ACCOUNT_SESSION_REMEMBER = False  # "Remember me" unchecked by default
 SESSION_COOKIE_AGE = 43200  # 12 hours (in seconds)
 SESSION_SAVE_EVERY_REQUEST = True  # Extend session on activity
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# CSRF Protection
+CSRF_USE_SESSIONS = APP_ENV in ["prod", "stage"]
+CSRF_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # URL redirects
 LOGIN_URL = '/auth/login/'
@@ -396,3 +405,191 @@ else:
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Production-specific settings
+if APP_ENV in ["prod", "stage"]:
+    # Security Settings
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    # HTTPS Settings - ADD THESE
+    SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+
+    # CORS and Hosts - ADD THESE
+    CORS_ALLOWED_ORIGINS = tuple(
+        group.strip() for group in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if group.strip()
+        # 'https://app.prod.raulstechtips.dev',
+        # 'https://app.raulstechtips.dev',
+    )
+    ALLOWED_HOSTS = [
+        group.strip() for group in os.environ.get('ALLOWED_HOSTS', '').split(',') if group.strip()
+        # 'app.prod.raulstechtips.dev',
+        # 'app.raulstechtips.dev',
+    ]
+
+    # CSRF Trusted Origins - ADD THIS SECTION
+    CSRF_TRUSTED_ORIGINS = [
+        group.strip() for group in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if group.strip()
+        # 'https://app.prod.raulstechtips.dev',
+        # 'https://app.raulstechtips.dev',
+    ]
+    # Logging Configuration
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {message}',
+                'style': '{',
+            },
+            'json': {
+                'format': '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s"}',
+                'style': '%',
+            },
+        },
+        'filters': {
+            'exclude_health_checks': {
+                '()': 'django.utils.log.CallbackFilter',
+                'callback': lambda record: not (
+                    hasattr(record, 'request') and 
+                    hasattr(record.request, 'path') and
+                    record.request.path == '/health/'
+                ),
+            },
+            'health_check_only': {
+                '()': 'django.utils.log.CallbackFilter',
+                'callback': lambda record: (
+                    hasattr(record, 'request') and 
+                    hasattr(record.request, 'path') and
+                    record.request.path == '/health/'
+                ),
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'json',  # JSON format for CloudWatch parsing
+                'filters': ['exclude_health_checks'],
+            },
+            'health_checks': {
+                'level': 'WARNING',  # Only log health check errors
+                'class': 'logging.StreamHandler',
+                'formatter': 'json',
+                'filters': ['health_check_only'],
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.db.backends': {
+                'handlers': ['console'],
+                'level': 'WARNING',  # Reduce SQL query logging in production
+                'propagate': False,
+            },
+            'django.security': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.request': {
+                'handlers': ['console', 'health_checks'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            # Add missing logger configurations
+            'authentication': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'config.middleware': {
+                'handlers': ['console'],
+                'level': 'WARNING',  # Only log warnings and errors from middleware
+                'propagate': False,
+            },
+            'frontend': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'tasks': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            
+            # Reduce noise from third-party libraries
+            'boto3': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'botocore': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+            'urllib3': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+        },
+    }
+    
+    # File-based caching (cost-effective alternative to Redis)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': '/tmp/django_cache',
+            'TIMEOUT': 300,  # 5 minutes default
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,  # Maximum number of cache entries
+                'CULL_FREQUENCY': 3,  # Remove 1/3 of entries when max is reached
+            }
+        }
+    }
+    
+    # Performance settings
+    DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+    FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+    
+    # Disable Django Debug Toolbar and other development tools
+    DEBUG_TOOLBAR_CONFIG = {}
+    
+    # Optimize for production
+    TEMPLATE_DEBUG = False
+    
+    # Security middleware settings
+    # SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    
+    # Rate limiting (basic implementation)
+    # Note: For more sophisticated rate limiting, consider django-ratelimit package
+    
+    # Email configuration (placeholder for future implementation)
+    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    # EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+    # EMAIL_USE_TLS = True
+    # EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    # EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+    # DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@yourdomain.com')
