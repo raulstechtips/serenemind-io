@@ -224,13 +224,13 @@ SESSION_SAVE_EVERY_REQUEST = True  # Extend session on activity
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'None'
 
 # CSRF Protection
-CSRF_USE_SESSIONS = APP_ENV in ["prod", "stage"]
+CSRF_USE_SESSIONS = False  # Must be False when using fetch/AJAX - CSRF token needs to be in cookie
 CSRF_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Must be False to allow JavaScript to read CSRF token
+CSRF_COOKIE_SAMESITE = 'None'
 
 # URL redirects
 LOGIN_URL = '/auth/login/'
@@ -243,7 +243,7 @@ ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
 
 # User activation
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if APP_ENV == 'prod' else 'http'
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if APP_ENV in ["prod", "stage"] else 'http'
 
 # Custom adapter
 ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'

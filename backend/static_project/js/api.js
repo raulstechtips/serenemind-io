@@ -28,7 +28,6 @@ const api = {
                     'X-CSRFToken': csrfToken,
                     ...options.headers,
                 },
-                credentials: 'same-origin',
                 ...options
             });
             
@@ -92,7 +91,6 @@ const api = {
             headers: {
                 'X-CSRFToken': this.getCsrfToken()
             },
-            credentials: 'same-origin',
             redirect: 'manual'
         });
     },
@@ -110,7 +108,6 @@ const api = {
             headers: {
                 'X-CSRFToken': this.getCsrfToken()
             },
-            credentials: 'same-origin',
             redirect: 'manual'
         });
     },
@@ -126,7 +123,6 @@ const api = {
             headers: {
                 'X-CSRFToken': this.getCsrfToken()
             },
-            credentials: 'same-origin',
             redirect: 'manual'
         });
     },
