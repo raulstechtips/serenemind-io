@@ -75,9 +75,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "config.middleware.health_check_middleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -227,9 +227,9 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # CSRF Protection
-CSRF_USE_SESSIONS = False  # Must be False when using fetch/AJAX - CSRF token needs to be in cookie
+CSRF_USE_SESSIONS = APP_ENV in ["prod", "stage"]
 CSRF_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
-CSRF_COOKIE_HTTPONLY = False  # Must be False to allow JavaScript to read CSRF token
+CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # URL redirects
