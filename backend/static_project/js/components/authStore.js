@@ -104,13 +104,35 @@ function defineAuthStore() {
             
             try {
                 // Extract form data
+                const email = formData.get('email');
+                const password1 = formData.get('password1');
+                const password2 = formData.get('password2');
+                const firstName = formData.get('first_name');
+                const lastName = formData.get('last_name');
+                
+                // Frontend validation: Check if passwords match
+                if (password1 !== password2) {
+                    this.errors = { password2: 'Passwords do not match.' };
+                    window.showToast('Passwords do not match.', 'error');
+                    this.loading = false;
+                    return;
+                }
+                
+                // Frontend validation: Password complexity
+                const passwordErrors = this.validatePasswordComplexity(password1);
+                if (passwordErrors.length > 0) {
+                    this.errors = { password1: passwordErrors[0] };
+                    window.showToast(passwordErrors[0], 'error');
+                    this.loading = false;
+                    return;
+                }
+                
+                // Prepare data for headless API (browser client uses simplified schema)
                 const userData = {
-                    email: formData.get('email'),
-                    email2: formData.get('email2'),
-                    password1: formData.get('password1'),
-                    password2: formData.get('password2'),
-                    first_name: formData.get('first_name'),
-                    last_name: formData.get('last_name')
+                    email: email,
+                    password: password1,  // Send as 'password', not 'password1'
+                    first_name: firstName,
+                    last_name: lastName
                 };
                 
                 // Call headless API
@@ -161,11 +183,11 @@ function defineAuthStore() {
                     if (error.param) {
                         // Map API field names to template field names
                         const fieldMap = {
-                            'email': 'login',        // Login form uses 'login' for email field
-                            'password': 'password',  // Password field (login form)
-                            'email2': 'email2',      // Confirm email (signup form)
-                            'password1': 'password1', // Password field (signup form)
-                            'password2': 'password2', // Confirm password (signup form)
+                            // Login form mappings
+                            'email': 'login',        // API 'email' → template 'login' field
+                            
+                            // Signup form mappings
+                            'password': 'password1', // API 'password' → template 'password1' field
                             'first_name': 'first_name',
                             'last_name': 'last_name'
                         };
@@ -227,10 +249,46 @@ function defineAuthStore() {
                     overlay.style.display = 'none';
                 }, 300);
             }
+        },
+        
+        /**
+         * Validate password complexity
+         * @param {string} password - Password to validate
+         * @returns {Array} - Array of error messages (empty if valid)
+         */
+        validatePasswordComplexity(password) {
+            const errors = [];
+            
+            // Minimum length (8 characters)
+            if (password.length < 12) {
+                errors.push('Password must be at least 8 characters long.');
+                return errors; // Return early if too short
+            }
+            
+            // At least one uppercase letter
+            if (!/[A-Z]/.test(password)) {
+                errors.push('Password must contain at least one uppercase letter.');
+            }
+            
+            // At least one lowercase letter
+            if (!/[a-z]/.test(password)) {
+                errors.push('Password must contain at least one lowercase letter.');
+            }
+            
+            // At least one number
+            if (!/\d/.test(password)) {
+                errors.push('Password must contain at least one number.');
+            }
+            
+            // At least one special character
+            if (!/[!@#$%^&*()_+\-=\[\]{}|;:'",.<>?/\\`~]/.test(password)) {
+                errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:\'",.<>?/\\`~).');
+            }
+            
+            return errors;
         }
     });
 }
-
 // CRITICAL: Timing-safe initialization (matches existing pattern)
 if (window.Alpine) {
     defineAuthStore();

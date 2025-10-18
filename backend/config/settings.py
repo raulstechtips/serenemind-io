@@ -212,13 +212,13 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification for now
 # Signup fields (NEW FORMAT)
 # Format: 'field' or 'field*' (asterisk = required)
 ACCOUNT_SIGNUP_FIELDS = [
+    'email*',        # Required: Email address
+    'password*',    # Required: Password
     'first_name*',   # Required: First name
     'last_name*',    # Required: Last name
-    'email*',        # Required: Email address
-    'email2*',       # Required: Confirm email
-    'password1*',    # Required: Password
-    'password2*',    # Required: Confirm password
 ]
+# Explicitly tell allauth we don't want username
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True
 
 # Session settings
