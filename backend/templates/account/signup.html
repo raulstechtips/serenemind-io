@@ -5,6 +5,10 @@
 
 {% block content %}
 <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
+    {{ form.non_field_errors }}
+    {% for field in form %}
+        {{ field.label_tag }} {{ field }} {{ field.errors }}
+    {% endfor %}
     <div class="max-w-md w-full space-y-8">
         <!-- Logo and Title -->
         <div class="text-center">

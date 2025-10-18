@@ -517,7 +517,12 @@ if APP_ENV in ["prod", "stage"]:
                 'level': 'INFO',
                 'propagate': False,
             },
-            # Add missing logger configurations
+            'allauth': {
+                'handlers': ['console'],
+                'level': 'DEBUG',
+                'propagate': False,
+            },
+            "django.security.csrf": {"handlers":["console"], "level":"DEBUG", "propagate": False},
             'authentication': {
                 'handlers': ['console'],
                 'level': 'INFO',
