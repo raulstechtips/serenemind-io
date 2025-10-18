@@ -51,3 +51,16 @@ def dashboard(request):
     Main daily view with date navigation and task management
     """
     return render(request, 'pages/dashboard.html')
+
+
+def login(request):
+    """Login view (function-based) - Phase 4 implementation
+    Login view with email and password input
+    """
+    return render(request, 'account/login.html')
+
+def signup(request):
+    """Signup view (function-based) - Phase 4 implementation
+    Signup view with email and password input
+    """
+    return render(request, 'account/signup.html')

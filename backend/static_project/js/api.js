@@ -6,6 +6,7 @@
 
 const api = {
     baseURL: '/api',
+    authURL: '/_allauth/browser/v1/auth',
     profileURL: '/account/api',
     
     /**
@@ -75,56 +76,90 @@ const api = {
     },
     
     // ==========================================
-    // AUTHENTICATION ENDPOINTS
+    // AUTHENTICATION ENDPOINTS (Headless API)
     // ==========================================
     
     /**
-     * Login user
-     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
-     * @param {FormData} formData - Form data with login credentials
-     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     * Login user via headless API
+     * @param {string} email - User email address
+     * @param {string} password - User password
+     * @returns {Promise<object>} - Login response with user data or errors
      */
-    async login(formData) {
-        return fetch('/auth/login/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': this.getCsrfToken()
-            },
-            redirect: 'manual'
-        });
+    async login(email, password) {
+        try {
+            const response = await fetch(`${this.authURL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include', // Important: Include cookies in request
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Login API error:', error);
+            throw error;
+        }
     },
     
     /**
-     * Signup user
-     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
-     * @param {FormData} formData - Form data with signup information
-     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     * Signup user via headless API
+     * @param {object} userData - User data {email, password1, password2, first_name, last_name}
+     * @returns {Promise<object>} - Signup response with user data or errors
      */
-    async signup(formData) {
-        return fetch('/auth/signup/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': this.getCsrfToken()
-            },
-            redirect: 'manual'
-        });
+    async signup(userData) {
+        try {
+            const response = await fetch(`${this.authURL}/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include', // Important: Include cookies in request
+                body: JSON.stringify(userData)
+            });
+            
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Signup API error:', error);
+            throw error;
+        }
     },
     
     /**
-     * Logout user
-     * Note: Auth endpoints return HTML, not JSON, so we use raw fetch
-     * @returns {Promise<Response>} - Fetch response (for redirect detection)
+     * Logout user via headless API
+     * @returns {Promise<object>} - Logout response
      */
     async logout() {
-        return fetch('/auth/logout/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': this.getCsrfToken()
-            },
-            redirect: 'manual'
-        });
+        try {
+            const response = await fetch(`${this.authURL}/session`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include' // Important: Include cookies in request
+            });
+            
+            // Allauth headless browser returns 401 on successful logout (you're now "unauthorized")
+            // Also accept 200/204 for compatibility
+            if (response.status === 200 || response.status === 204 || response.status === 401) {
+                return { ok: true, status: response.status };
+            }
+            
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Logout API error:', error);
+            throw error;
+        }
     },
     
     /**

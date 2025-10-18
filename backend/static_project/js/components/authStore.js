@@ -11,6 +11,7 @@ function defineAuthStore() {
         isAuthenticated: false,        // Auth status boolean
         loading: false,                // Loading state for async operations
         _initialized: false,           // Guard for idempotent init
+        errors: {},                    // Field-specific errors {field: message}
         
         // ============ INITIALIZATION ============
         async init() {
@@ -25,33 +26,34 @@ function defineAuthStore() {
         // ============ LOGIN METHOD ============
         async login(formData) {
             this.loading = true;
+            this.errors = {}; // Clear previous errors
             
             try {
-                const response = await api.login(formData);
+                // Extract email and password from FormData
+                const email = formData.get('login');
+                const password = formData.get('password');
                 
-                // Check for successful login
-                // Django Allauth redirects on success, returns 200 with errors on failure
-                if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 0) {
-                    // Login successful - redirect happened
-                    window.location.href = '/'; // Dashboard
+                // Call headless API
+                const response = await api.login(email, password);
+                
+                // Check for successful login (200 status)
+                if (response.ok && response.status === 200) {
+                    // Login successful - redirect to dashboard
+                    window.showToast('Login successful!', 'success', 2000);
+                    window.location.href = '/';
                     return;
                 }
                 
-                if (response.ok && response.redirected) {
-                    // Another success pattern
-                    window.location.href = response.url || '/';
-                    return;
-                }
-                
-                // If we get here, login failed - parse errors
-                const html = await response.text();
-                
-                // Check for common error patterns in the HTML response
-                if (html.includes('The email address and/or password you specified are not correct') || 
-                    html.includes('errorlist') || 
-                    html.includes('This field is required')) {
-                    window.showToast('Invalid email or password. Please try again.', 'error');
+                // Handle errors from headless API
+                if (response.data && response.data.errors) {
+                    // Parse field-specific errors
+                    this.errors = this.parseErrors(response.data.errors);
+                    
+                    // Show error message from API (first error's message)
+                    const errorMessage = response.data.errors[0]?.message || 'Please fix the errors and try again.';
+                    window.showToast(errorMessage, 'error');
                 } else {
+                    // Generic error
                     window.showToast('Login failed. Please try again.', 'error');
                 }
                 
@@ -69,19 +71,19 @@ function defineAuthStore() {
             this.showPageLoadingOverlay();
             
             try {
-                await api.logout();
+                const response = await api.logout();
                 
-                // Logout is almost always successful
                 // Clear user data immediately
                 this.user = null;
                 this.isAuthenticated = false;
+                this.errors = {};
                 
                 // Show success toast
                 window.showToast('Logged out successfully', 'success', 3000);
                 
                 // Redirect to login page after showing toast
                 setTimeout(() => {
-                    window.location.href = '/auth/login/';
+                    window.location.href = '/account/login/';
                 }, 1500);
                 
             } catch (error) {
@@ -90,7 +92,7 @@ function defineAuthStore() {
                 window.showToast('An error occurred during logout.', 'error');
                 // Still redirect even on error
                 setTimeout(() => {
-                    window.location.href = '/auth/login/';
+                    window.location.href = '/account/login/';
                 }, 1500);
             }
         },
@@ -98,36 +100,42 @@ function defineAuthStore() {
         // ============ SIGNUP METHOD ============
         async signup(formData) {
             this.loading = true;
+            this.errors = {}; // Clear previous errors
             
             try {
-                const response = await api.signup(formData);
+                // Extract form data
+                const userData = {
+                    email: formData.get('email'),
+                    email2: formData.get('email2'),
+                    password1: formData.get('password1'),
+                    password2: formData.get('password2'),
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name')
+                };
                 
-                // Similar pattern to login
-                if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 0) {
-                    // Signup successful
-                    window.location.href = '/';
+                // Call headless API
+                const response = await api.signup(userData);
+                
+                // Check for successful signup (200 status)
+                if (response.ok && response.status === 200) {
+                    // Signup successful - redirect to dashboard
+                    window.showToast('Account created successfully!', 'success', 2000);
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
                     return;
                 }
                 
-                if (response.ok && response.redirected) {
-                    // Another success pattern
-                    window.location.href = response.url || '/';
-                    return;
-                }
-                
-                // If we get here, signup failed - parse errors
-                const html = await response.text();
-                
-                // Check for common error patterns in the HTML response
-                if (html.includes('A user is already registered with this email address')) {
-                    window.showToast('This email is already registered. Please login instead.', 'error');
-                } else if (html.includes('This password is too common') || 
-                           html.includes('This password is too short') ||
-                           html.includes('This password is entirely numeric')) {
-                    window.showToast('Please choose a stronger password.', 'error');
-                } else if (html.includes('errorlist') || html.includes('This field is required')) {
-                    window.showToast('Please fix the errors and try again.', 'error');
+                // Handle errors from headless API
+                if (response.data && response.data.errors) {
+                    // Parse field-specific errors
+                    this.errors = this.parseErrors(response.data.errors);
+                    
+                    // Show error message from API (first error's message)
+                    const errorMessage = response.data.errors[0]?.message || 'Please fix the errors and try again.';
+                    window.showToast(errorMessage, 'error');
                 } else {
+                    // Generic error
                     window.showToast('Signup failed. Please try again.', 'error');
                 }
                 
@@ -140,6 +148,52 @@ function defineAuthStore() {
         },
         
         // ============ HELPER METHODS ============
+        
+        /**
+         * Parse errors from headless API response
+         * @param {Array} errors - Array of error objects from API
+         * @returns {Object} - Map of field names to error messages
+         */
+        parseErrors(errors) {
+            const errorMap = {};
+            if (Array.isArray(errors)) {
+                errors.forEach(error => {
+                    if (error.param) {
+                        // Map API field names to template field names
+                        const fieldMap = {
+                            'email': 'login',        // Login form uses 'login' for email field
+                            'password': 'password',  // Password field (login form)
+                            'email2': 'email2',      // Confirm email (signup form)
+                            'password1': 'password1', // Password field (signup form)
+                            'password2': 'password2', // Confirm password (signup form)
+                            'first_name': 'first_name',
+                            'last_name': 'last_name'
+                        };
+                        const field = fieldMap[error.param] || error.param;
+                        errorMap[field] = error.message;
+                    }
+                });
+            }
+            return errorMap;
+        },
+        
+        /**
+         * Get error message for a specific field
+         * @param {string} field - Field name
+         * @returns {string} - Error message or empty string
+         */
+        getError(field) {
+            return this.errors[field] || '';
+        },
+        
+        /**
+         * Check if a field has an error
+         * @param {string} field - Field name
+         * @returns {boolean} - True if field has error
+         */
+        hasError(field) {
+            return !!this.errors[field];
+        },
         
         /**
          * Set user data (called from Django template context)

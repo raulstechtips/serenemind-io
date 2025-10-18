@@ -37,13 +37,16 @@ if APP_ENV in ["dev", "test"]:
         'http://localhost:8081',
         'http://localhost:8080',
         'http://localhost:3000',
+        'http://localhost:8000',  # Add the backend itself for same-origin
     )
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost:8081',
         'http://localhost:8080',
         'http://localhost:3000',
+        'http://localhost:8000',
     ]
     ALLOWED_HOSTS = ["*"]
+    CORS_ALLOW_CREDENTIALS = True  # Required for credentials: 'include' in fetch
 
 
 # Application definition
@@ -65,6 +68,7 @@ INSTALLED_APPS = [
     # Allauth
     "allauth",
     "allauth.account",
+    "allauth.headless",  # Headless API for JSON-based authentication
     # Note: NO socialaccount (future feature)
 
     # Project apps
@@ -224,18 +228,20 @@ SESSION_SAVE_EVERY_REQUEST = True  # Extend session on activity
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'None'
+# Lax for development (same-origin), None for production (cross-origin with Secure)
+SESSION_COOKIE_SAMESITE = 'None' if APP_ENV in ["prod", "stage"] else 'Lax'
 
 # CSRF Protection
 CSRF_USE_SESSIONS = False  # Must be False when using fetch/AJAX - CSRF token needs to be in cookie
 CSRF_COOKIE_SECURE = APP_ENV in ["prod", "stage"]
 CSRF_COOKIE_HTTPONLY = False  # Must be False to allow JavaScript to read CSRF token
-CSRF_COOKIE_SAMESITE = 'None'
+# Lax for development (same-origin), None for production (cross-origin with Secure)
+CSRF_COOKIE_SAMESITE = 'None' if APP_ENV in ["prod", "stage"] else 'Lax'
 
 # URL redirects
-LOGIN_URL = '/auth/login/'
+LOGIN_URL = '/account/login/'
 LOGIN_REDIRECT_URL = '/'  # Dashboard
-ACCOUNT_LOGOUT_REDIRECT_URL = '/auth/login/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/account/login/'
 ACCOUNT_SIGNUP_REDIRECT_URL = '/'  # Dashboard
 
 # Password settings
@@ -245,8 +251,22 @@ ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if APP_ENV in ["prod", "stage"] else 'http'
 
-# Custom adapter
+# Custom adapters
 ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'
+HEADLESS_ADAPTER = 'authentication.adapters.CustomHeadlessAdapter'
+
+# ============================================
+# ALLAUTH HEADLESS API CONFIGURATION
+# ============================================
+
+# Disable traditional allauth views (we use custom views to serve templates)
+HEADLESS_ONLY = True
+
+# Future: Configure these when implementing email confirmation & password reset
+# HEADLESS_FRONTEND_URLS = {
+#     "account_confirm_email": "http://localhost:8000/account/verify-email/{key}",
+#     "account_reset_password_from_key": "http://localhost:8000/account/password/reset/{key}",
+# }
 
 # Rest Framework Settings
 # REST_FRAMEWORK = {

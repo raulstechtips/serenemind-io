@@ -18,17 +18,22 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from frontend.views import test_dashboard, master_tasks, templates, dashboard
+from frontend.views import test_dashboard, master_tasks, templates, dashboard, login, signup
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     
-    # Allauth URLs (login, signup, logout, etc.)
-    path('auth/', include('allauth.urls')),
+    # Headless API endpoints (for authentication)
+    path("_allauth/", include("allauth.headless.urls")),
+    path('account/login/', login, name='login'),
+    path('account/signup/', signup, name='signup'),
+    # Traditional allauth URLs (OPTIONAL: Can be removed since we use custom views + headless API)
+    # path('auth/', include('allauth.urls')),
     
     # Custom account management URLs (profile, etc.)
     path('account/', include('authentication.urls')),
     
+
     # API endpoints
     path("api/", include("tasks.urls")),
     

@@ -5,10 +5,6 @@
 
 {% block content %}
 <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-    {{ form.non_field_errors }}
-    {% for field in form %}
-        {{ field.label_tag }} {{ field }} {{ field.errors }}
-    {% endfor %}
     <div class="max-w-md w-full space-y-8">
         <!-- Logo and Title -->
         <div class="text-center">
@@ -29,7 +25,7 @@
         <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8">
             <form 
                 method="post" 
-                action="{% url 'account_login' %}" 
+                action="{% url 'login' %}" 
                 @submit.prevent="handleLogin"
                 x-data="loginHandler()"
                 class="space-y-6"
@@ -47,10 +43,17 @@
                         id="id_login"
                         required
                         autocomplete="email"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        :class="$store.auth.hasError('login') ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                         placeholder="you@example.com"
                         value="{{ form.login.value|default:'' }}"
                     >
+                    <!-- Dynamic error from headless API -->
+                    <p x-show="$store.auth.hasError('login')" 
+                       x-text="$store.auth.getError('login')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
+                    <!-- Server-side error (fallback) -->
                     {% if form.login.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.login.errors.0 }}</p>
                     {% endif %}
@@ -68,7 +71,8 @@
                             id="id_password"
                             required
                             autocomplete="current-password"
-                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="$store.auth.hasError('password') ? 'border-red-500' : 'border-gray-300'"
+                            class="w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                             placeholder="Enter your password"
                         >
                         <button 
@@ -86,6 +90,12 @@
                             </svg>
                         </button>
                     </div>
+                    <!-- Dynamic error from headless API -->
+                    <p x-show="$store.auth.hasError('password')" 
+                       x-text="$store.auth.getError('password')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
+                    <!-- Server-side error (fallback) -->
                     {% if form.password.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
                     {% endif %}
@@ -133,7 +143,7 @@
         <div class="text-center">
             <p class="text-sm text-gray-600">
                 Don't have an account? 
-                <a href="{% url 'account_signup' %}" class="font-medium text-primary-600 hover:text-primary-500">
+                <a href="{% url 'signup' %}" class="font-medium text-primary-600 hover:text-primary-500">
                     Sign up
                 </a>
             </p>

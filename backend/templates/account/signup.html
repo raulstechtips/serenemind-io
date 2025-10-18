@@ -5,10 +5,6 @@
 
 {% block content %}
 <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-    {{ form.non_field_errors }}
-    {% for field in form %}
-        {{ field.label_tag }} {{ field }} {{ field.errors }}
-    {% endfor %}
     <div class="max-w-md w-full space-y-8">
         <!-- Logo and Title -->
         <div class="text-center">
@@ -29,7 +25,7 @@
         <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8">
             <form 
                 method="post" 
-                action="{% url 'account_signup' %}" 
+                action="{% url 'signup' %}" 
                 @submit.prevent="handleSignup"
                 x-data="signupHandler()"
                 class="space-y-5"
@@ -47,10 +43,17 @@
                         id="id_first_name"
                         required
                         autocomplete="given-name"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        :class="$store.auth.hasError('first_name') ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                         placeholder="John"
                         value="{{ form.first_name.value|default:'' }}"
                     >
+                    <!-- Dynamic error from headless API -->
+                    <p x-show="$store.auth.hasError('first_name')" 
+                       x-text="$store.auth.getError('first_name')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
+                    <!-- Server-side error (fallback) -->
                     {% if form.first_name.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
                     {% endif %}
@@ -67,10 +70,15 @@
                         id="id_last_name"
                         required
                         autocomplete="family-name"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        :class="$store.auth.hasError('last_name') ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                         placeholder="Doe"
                         value="{{ form.last_name.value|default:'' }}"
                     >
+                    <p x-show="$store.auth.hasError('last_name')" 
+                       x-text="$store.auth.getError('last_name')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
                     {% if form.last_name.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
                     {% endif %}
@@ -87,10 +95,15 @@
                         id="id_email"
                         required
                         autocomplete="email"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        :class="$store.auth.hasError('email') ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                         placeholder="you@example.com"
                         value="{{ form.email.value|default:'' }}"
                     >
+                    <p x-show="$store.auth.hasError('email')" 
+                       x-text="$store.auth.getError('email')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
                     {% if form.email.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
                     {% endif %}
@@ -107,10 +120,15 @@
                         id="id_email2"
                         required
                         autocomplete="email"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                        :class="$store.auth.hasError('email2') ? 'border-red-500' : 'border-gray-300'"
+                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                         placeholder="you@example.com"
                         value="{{ form.email2.value|default:'' }}"
                     >
+                    <p x-show="$store.auth.hasError('email2')" 
+                       x-text="$store.auth.getError('email2')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
                     {% if form.email2.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.email2.errors.0 }}</p>
                     {% endif %}
@@ -128,7 +146,8 @@
                             id="id_password1"
                             required
                             autocomplete="new-password"
-                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="$store.auth.hasError('password1') ? 'border-red-500' : 'border-gray-300'"
+                            class="w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                             placeholder="Enter your password"
                         >
                         <button 
@@ -149,6 +168,10 @@
                     <p class="mt-1 text-xs text-gray-500">
                         Must be 12+ characters, 1 uppercase, 1 number, 1 special character
                     </p>
+                    <p x-show="$store.auth.hasError('password1')" 
+                       x-text="$store.auth.getError('password1')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
                     {% if form.password1.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
                     {% endif %}
@@ -166,7 +189,8 @@
                             id="id_password2"
                             required
                             autocomplete="new-password"
-                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="$store.auth.hasError('password2') ? 'border-red-500' : 'border-gray-300'"
+                            class="w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                             placeholder="Confirm your password"
                         >
                         <button 
@@ -184,6 +208,10 @@
                             </svg>
                         </button>
                     </div>
+                    <p x-show="$store.auth.hasError('password2')" 
+                       x-text="$store.auth.getError('password2')" 
+                       class="mt-1 text-sm text-red-600"
+                       x-cloak></p>
                     {% if form.password2.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
                     {% endif %}
@@ -218,7 +246,7 @@
         <div class="text-center">
             <p class="text-sm text-gray-600">
                 Already have an account? 
-                <a href="{% url 'account_login' %}" class="font-medium text-primary-600 hover:text-primary-500">
+                <a href="{% url 'login' %}" class="font-medium text-primary-600 hover:text-primary-500">
                     Sign in
                 </a>
             </p>
