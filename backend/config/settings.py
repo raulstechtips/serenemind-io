@@ -238,7 +238,6 @@ ACCOUNT_LOGIN_METHODS = {'email'}  # Email-only login (no username)
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # Disable username completely
 
 # Email verification
-ACCOUNT_AUTHENTICATION_METHOD = "email"  # Required for email-based authentication
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disabled - users don't need email verification
 ACCOUNT_PREVENT_ENUMERATION = True
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
