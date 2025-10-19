@@ -7,6 +7,7 @@ class PasswordComplexityValidator:
     """
     Validates that password contains:
     - At least one uppercase letter
+    - At least one lowercase letter
     - At least one number
     - At least one special character
     """
@@ -16,6 +17,12 @@ class PasswordComplexityValidator:
             raise ValidationError(
                 _("Password must contain at least one uppercase letter."),
                 code='password_no_upper',
+            )
+        
+        if not re.search(r'[a-z]', password):
+            raise ValidationError(
+                _("Password must contain at least one lowercase letter."),
+                code='password_no_lower',
             )
         
         if not re.search(r'\d', password):
@@ -34,6 +41,6 @@ class PasswordComplexityValidator:
     def get_help_text(self):
         return _(
             "Your password must contain at least one uppercase letter, "
-            "one number, and one special character (!@#$%^&*()_+-=[]{}|;:'\",.<>?/\\`~)."
+            "one lowercase letter, one number, and one special character (!@#$%^&*()_+-=[]{}|;:'\",.<>?/\\`~)."
         )
 

@@ -31,9 +31,7 @@ function defineTemplateBuilderStore() {
     availableTasks: [],      // Tasks not yet in template
     templateTasks: [],       // Tasks in template (with order)
     
-    // Weekday availability
-    disabledWeekdays: [],    // Weekdays assigned to other templates
-    originalWeekdays: [],    // Original weekdays (for edit mode)
+    // No longer need weekday availability checking - all weekdays always available
     
     // SortableJS instance (only for template tasks)
     sortableTemplate: null,
@@ -58,9 +56,8 @@ function defineTemplateBuilderStore() {
         if (this.templateId && this.isEditMode) {
           await this.loadTemplate();
         } else {
-          // Create mode - load available tasks and weekdays
+          // Create mode - load available tasks
           await this.loadAvailableTasks();
-          await this.loadWeekdayAvailability();
           this.loading = false; // Turn off loading after data is loaded
         }
       } catch (error) {
@@ -86,8 +83,6 @@ function defineTemplateBuilderStore() {
       this.selectedWeekdays = [];
       this.availableTasks = [];
       this.templateTasks = [];
-      this.disabledWeekdays = [];
-      this.originalWeekdays = [];
       this.error = null;
       this._initialized = false;
       
@@ -108,12 +103,11 @@ function defineTemplateBuilderStore() {
         
         this.templateName = template.title;
         this.selectedWeekdays = [...template.weekdays];
-        this.originalWeekdays = [...template.weekdays];
         
         // Load template tasks with order
         // Backend returns: {id: task_id, title, order, template_task_id}
         this.templateTasks = template.tasks.map(t => ({
-          id: parseInt(t.id),  // This is the actual task ID
+          id: t.id,  // This is the actual task ID (UUID string)
           title: t.title,
           order: t.order,
           template_task_id: t.template_task_id  // This is the TemplateTask ID
@@ -121,13 +115,10 @@ function defineTemplateBuilderStore() {
         
         // Load all tasks and filter out ones in template
         const allTasks = await api.getTasks();
-        const templateTaskIds = this.templateTasks.map(t => parseInt(t.id));
+        const templateTaskIds = this.templateTasks.map(t => t.id);
         this.availableTasks = allTasks
-          .filter(t => !templateTaskIds.includes(parseInt(t.id)))
-          .map(t => ({ id: parseInt(t.id), title: t.title }));
-        
-        // Load weekday availability (current weekdays + available ones)
-        await this.loadWeekdayAvailability();
+          .filter(t => !templateTaskIds.includes(t.id))
+          .map(t => ({ id: t.id, title: t.title }));
         
       } catch (error) {
         console.error('Error loading template:', error);
@@ -174,28 +165,6 @@ function defineTemplateBuilderStore() {
     },
     
     /**
-     * Load weekday availability
-     */
-    async loadWeekdayAvailability() {
-      try {
-        const data = await api.getAvailableWeekdays();
-        
-        // In edit mode, can keep current weekdays + available ones
-        if (this.isEditMode) {
-          const assignedToOthers = data.assigned_weekdays.filter(
-            day => !this.originalWeekdays.includes(day)
-          );
-          this.disabledWeekdays = assignedToOthers;
-        } else {
-          this.disabledWeekdays = data.assigned_weekdays || [];
-        }
-        
-      } catch (error) {
-        console.error('Error loading weekday availability:', error);
-      }
-    },
-    
-    /**
      * Initialize SortableJS for drag-drop
      */
     initSortable() {
@@ -218,36 +187,32 @@ function defineTemplateBuilderStore() {
     addTaskById(taskId) {
       if (!taskId) return;
       
-      const numericTaskId = parseInt(taskId);
-      
       // Find the task in available tasks
-      const task = this.availableTasks.find(t => parseInt(t.id) === numericTaskId);
+      const task = this.availableTasks.find(t => t.id === taskId);
       
       if (!task) return;
       
       // Add to template tasks at the end
       this.templateTasks.push({
-        id: parseInt(task.id),
+        id: task.id,
         title: task.title,
         order: this.templateTasks.length + 1
       });
       
       // Remove from available tasks
-      this.availableTasks = this.availableTasks.filter(t => parseInt(t.id) !== numericTaskId);
+      this.availableTasks = this.availableTasks.filter(t => t.id !== taskId);
     },
     
     /**
      * Remove task from template (return to available)
      */
     removeTask(task) {
-      const numericTaskId = parseInt(task.id);
-      
       // Remove from template
-      this.templateTasks = this.templateTasks.filter(t => parseInt(t.id) !== numericTaskId);
+      this.templateTasks = this.templateTasks.filter(t => t.id !== task.id);
       
       // Add back to available tasks
       this.availableTasks.push({
-        id: numericTaskId,
+        id: task.id,
         title: task.title
       });
       
@@ -356,8 +321,7 @@ function defineTemplateBuilderStore() {
       // Reorder templateTasks array to match DOM order
       const orderedTasks = [];
       orderedIds.forEach(id => {
-        const numericId = parseInt(id);
-        const task = this.templateTasks.find(t => parseInt(t.id) === numericId);
+        const task = this.templateTasks.find(t => t.id === id);
         if (task) {
           orderedTasks.push(task);
         }
@@ -383,7 +347,7 @@ function defineTemplateBuilderStore() {
           title: this.templateName.trim(),
           weekdays: this.selectedWeekdays,
           tasks: orderedTasks.map((t, idx) => ({
-            task_id: parseInt(t.id),  // Ensure it's a number
+            task_id: t.id,  // UUID string
             order: (idx + 1) * 10  // Use 10, 20, 30... for cleaner ordering
           }))
         };

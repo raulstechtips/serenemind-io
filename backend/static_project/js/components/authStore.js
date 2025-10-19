@@ -259,9 +259,9 @@ function defineAuthStore() {
         validatePasswordComplexity(password) {
             const errors = [];
             
-            // Minimum length (8 characters)
+            // Minimum length (12 characters)
             if (password.length < 12) {
-                errors.push('Password must be at least 8 characters long.');
+                errors.push('Password must be at least 12 characters long.');
                 return errors; // Return early if too short
             }
             

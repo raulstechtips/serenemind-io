@@ -22,15 +22,15 @@ function defineTemplateManagerStore() {
     loading: true,
     savingOrder: false,
     
-    // Weekly overview mapping
+    // Weekly overview mapping (now arrays of templates)
     weeklyOverview: {
-      Monday: null,
-      Tuesday: null,
-      Wednesday: null,
-      Thursday: null,
-      Friday: null,
-      Saturday: null,
-      Sunday: null
+      Monday: [],
+      Tuesday: [],
+      Wednesday: [],
+      Thursday: [],
+      Friday: [],
+      Saturday: [],
+      Sunday: []
     },
     
     // Template details
@@ -101,16 +101,10 @@ function defineTemplateManagerStore() {
      * Build weekly overview mapping
      */
     buildWeeklyOverview() {
-      // Reset
-      this.weeklyOverview = {
-        Monday: null,
-        Tuesday: null,
-        Wednesday: null,
-        Thursday: null,
-        Friday: null,
-        Saturday: null,
-        Sunday: null
-      };
+      // Reset to empty arrays
+      Object.keys(this.weeklyOverview).forEach(day => {
+        this.weeklyOverview[day] = [];
+      });
       
       // Safety check
       if (!Array.isArray(this.templates)) {
@@ -119,15 +113,15 @@ function defineTemplateManagerStore() {
         return;
       }
       
-      // Map templates to weekdays
+      // Build array of templates per weekday
       this.templates.forEach(template => {
         if (template && Array.isArray(template.weekdays)) {
           template.weekdays.forEach(day => {
-            this.weeklyOverview[day] = {
+            this.weeklyOverview[day].push({
               id: template.id,
               title: template.title,
               taskCount: template.tasks ? template.tasks.length : 0
-            };
+            });
           });
         }
       });
@@ -165,19 +159,21 @@ function defineTemplateManagerStore() {
     
     /**
      * Handle weekday click in weekly overview
-     * Opens edit modal if template exists, or create modal with pre-selected weekday if not
+     * Opens create modal with pre-selected weekday when clicking empty weekday
      */
     selectTemplateByWeekday(weekday) {
-      const templateInfo = this.weeklyOverview[weekday];
-      if (templateInfo) {
-        // Has template - open edit modal
-        const template = this.templates.find(t => t.id === templateInfo.id);
-        if (template) {
-          this.openEditModal(template);
-        }
-      } else {
-        // No template - open create modal with this weekday pre-selected
-        this.openCreateModal([weekday]);
+      // Open create modal with this weekday pre-selected
+      this.openCreateModal([weekday]);
+    },
+    
+    /**
+     * Open edit modal for specific template (used by mini-cards)
+     * @param {object} templateInfo - {id, title, taskCount}
+     */
+    openEditModalById(templateInfo) {
+      const template = this.templates.find(t => t.id === templateInfo.id);
+      if (template) {
+        this.openEditModal(template);
       }
     },
     

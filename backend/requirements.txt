@@ -16,7 +16,7 @@ drf-spectacular==0.28.0
 django-guardian==3.0.0
 
 # Auth packages
-django-allauth==65.8.1
+django-allauth==65.12.1
 python-decouple==3.8
 
 # Testing packages

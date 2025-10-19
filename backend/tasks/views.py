@@ -362,25 +362,6 @@ class TemplateDetailView(View):
             }, status=400)
 
 
-@method_decorator(login_required, name='dispatch')
-class AvailableWeekdaysView(View):
-    """Get list of weekdays not yet assigned to any template FOR THIS USER"""
-    
-    def get(self, request):
-        # Get all assigned weekdays FOR THIS USER
-        assigned_weekdays = []
-        for template in Template.objects.filter(user=request.user):
-            assigned_weekdays.extend(template.weekdays)
-        
-        # Get available weekdays
-        available = [day for day in Weekday.values if day not in assigned_weekdays]
-        
-        return JsonResponse({
-            'available_weekdays': available,
-            'assigned_weekdays': list(set(assigned_weekdays))
-        })
-
-
 # ============================================
 # DAILY TASK LIST VIEWS
 # ============================================
@@ -444,7 +425,7 @@ class DailyTaskListCreateView(View):
             
             # Verify template exists and belongs to current user
             try:
-                template = Template.objects.get(id=template_id, user=request.user)
+                template = Template.objects.prefetch_related('template_tasks__task').get(id=template_id, user=request.user)
             except Template.DoesNotExist:
                 return JsonResponse({'error': f'Template with ID {template_id} not found'}, status=404)
             
@@ -454,6 +435,9 @@ class DailyTaskListCreateView(View):
                 date=date,
                 template=template
             )
+            
+            # Refresh to get the latest data
+            daily_list.refresh_from_db()
             
             # Get created tasks
             tasks = [

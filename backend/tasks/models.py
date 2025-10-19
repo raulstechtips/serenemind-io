@@ -4,7 +4,9 @@ from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+import uuid
 
+from allauth.account.models import EmailAddress
 # Create your models here.
 class Weekday(models.TextChoices):
     MONDAY = "Monday", "Monday"
@@ -17,6 +19,7 @@ class Weekday(models.TextChoices):
 
 class Task(models.Model):
     """Master task library - tasks owned by specific users"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -36,6 +39,7 @@ class Task(models.Model):
 
 class Template(models.Model):
     """Daily task templates - owned by specific users"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -55,35 +59,11 @@ class Template(models.Model):
     def __str__(self):
         return self.title
     
-    def clean(self):
-        """Validate that weekdays aren't already assigned to another template FOR THIS USER"""
-        if self.weekdays:
-            # Find templates that have any overlapping weekdays FOR THIS USER
-            conflicting_templates = Template.objects.filter(
-                user=self.user
-            ).exclude(pk=self.pk).filter(
-                weekdays__overlap=self.weekdays
-            )
-            
-            if conflicting_templates.exists():
-                # Get the specific conflicting weekdays
-                conflicting_days = []
-                for template in conflicting_templates:
-                    overlapping = set(self.weekdays) & set(template.weekdays)
-                    conflicting_days.extend(overlapping)
-                
-                raise ValidationError(
-                    f"Weekdays {', '.join(set(conflicting_days))} are already assigned to another template."
-                )
-    
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-    
     class Meta:
         ordering = ['title']
 
 class TemplateTask(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     template = models.ForeignKey(Template, on_delete=models.CASCADE, related_name='template_tasks')
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     order = models.PositiveIntegerField()
@@ -97,6 +77,7 @@ class TemplateTask(models.Model):
 
 class DailyTaskList(models.Model):
     """Daily task schedules - owned by specific users"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -118,7 +99,8 @@ class DailyTaskList(models.Model):
         return f"{self.template.title} - {self.date}"
     
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        # Check if this is a new object by seeing if it exists in the database
+        is_new = not self.pk or not DailyTaskList.objects.filter(pk=self.pk).exists()
         
         # Template is required
         if not self.template_id:
@@ -155,6 +137,7 @@ class DailyTaskList(models.Model):
 
 class DailyTask(models.Model):
     """Daily tasks - individual task instances owned by specific users"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

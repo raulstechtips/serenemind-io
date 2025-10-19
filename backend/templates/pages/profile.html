@@ -120,8 +120,8 @@
                     <p x-show="$store.profile.errors.avatar" x-text="$store.profile.errors.avatar" class="mt-1 text-sm text-red-600"></p>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="flex items-center justify-end space-x-3 pt-4">
+                <!-- Action Buttons (only show when there are changes) -->
+                <div x-show="$store.profile.hasProfileChanges" x-cloak class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100 mt-4">
                     <button 
                         type="button"
                         @click="$store.profile.cancelEdit()"
@@ -163,14 +163,176 @@
                     <span class="text-gray-600">Last Login:</span>
                     <span class="text-gray-900 font-medium" x-text="$store.profile.formatDateTime($store.profile.profile.last_login)"></span>
                 </div>
-                <div class="flex justify-between py-2 border-t border-gray-100">
-                    <span class="text-gray-600">Last Activity:</span>
-                    <span class="text-gray-900 font-medium" x-text="$store.profile.formatDateTime($store.profile.profile.last_activity)"></span>
-                </div>
             </div>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                Change Password
+            </h3>
+            
+            <form @submit.prevent="handlePasswordChange" x-data="passwordChangeHandler()" class="space-y-5">
+                <!-- Current Password -->
+                <div>
+                    <label for="current_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Current Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative" x-data="{ showPassword: false }">
+                        <input 
+                            :type="showPassword ? 'text' : 'password'"
+                            id="current_password"
+                            x-model="currentPassword"
+                            required
+                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="{ 'border-red-300': $store.profile.errors.current_password }"
+                        >
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            tabindex="-1"
+                        >
+                            <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p x-show="$store.profile.errors.current_password" x-text="$store.profile.errors.current_password" class="mt-1 text-sm text-red-600"></p>
+                </div>
+
+                <!-- New Password -->
+                <div>
+                    <label for="new_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative" x-data="{ showPassword: false }">
+                        <input 
+                            :type="showPassword ? 'text' : 'password'"
+                            id="new_password"
+                            x-model="newPassword"
+                            @input="validatePassword"
+                            required
+                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="{ 'border-red-300': $store.profile.errors.new_password || passwordErrors.length > 0 }"
+                        >
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            tabindex="-1"
+                        >
+                            <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Must be 12+ characters, 1 uppercase, 1 number, 1 special character</p>
+                    <!-- Real-time validation feedback -->
+                    <template x-for="err in passwordErrors" :key="err">
+                        <p class="mt-1 text-sm text-red-600" x-text="err"></p>
+                    </template>
+                    <p x-show="$store.profile.errors.new_password" x-text="$store.profile.errors.new_password" class="mt-1 text-sm text-red-600"></p>
+                </div>
+
+                <!-- Confirm New Password -->
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm New Password <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative" x-data="{ showPassword: false }">
+                        <input 
+                            :type="showPassword ? 'text' : 'password'"
+                            id="confirm_password"
+                            x-model="confirmPassword"
+                            required
+                            class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            :class="{ 'border-red-300': $store.profile.errors.password_confirm }"
+                        >
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            tabindex="-1"
+                        >
+                            <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg x-show="showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p x-show="$store.profile.errors.password_confirm" x-text="$store.profile.errors.password_confirm" class="mt-1 text-sm text-red-600"></p>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-center justify-end pt-4">
+                    <button 
+                        type="submit"
+                        class="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="$store.profile.saving"
+                    >
+                        <span x-show="!$store.profile.saving">Change Password</span>
+                        <span x-show="$store.profile.saving">Changing...</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+function passwordChangeHandler() {
+    return {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+        passwordErrors: [],
+        
+        // Validate password as user types
+        validatePassword() {
+            if (this.newPassword.length === 0) {
+                this.passwordErrors = [];
+                return;
+            }
+            this.passwordErrors = Alpine.store('auth').validatePasswordComplexity(this.newPassword);
+        },
+        
+        async handlePasswordChange() {
+            // Validate password complexity before submitting
+            const validationErrors = Alpine.store('auth').validatePasswordComplexity(this.newPassword);
+            if (validationErrors.length > 0) {
+                this.$store.profile.errors.new_password = validationErrors[0];
+                return;
+            }
+            
+            const success = await this.$store.profile.changePassword(
+                this.currentPassword,
+                this.newPassword,
+                this.confirmPassword
+            );
+            
+            if (success) {
+                // Clear form
+                this.currentPassword = '';
+                this.newPassword = '';
+                this.confirmPassword = '';
+                this.passwordErrors = [];
+            }
+        }
+    }
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}

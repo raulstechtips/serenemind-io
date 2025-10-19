@@ -36,13 +36,11 @@ if APP_ENV in ["dev", "test"]:
     CORS_ALLOWED_ORIGINS = (
         'http://localhost:8081',
         'http://localhost:8080',
-        'http://localhost:3000',
         'http://localhost:8000',  # Add the backend itself for same-origin
     )
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost:8081',
         'http://localhost:8080',
-        'http://localhost:3000',
         'http://localhost:8000',
     ]
     ALLOWED_HOSTS = ["*"]
@@ -176,6 +174,10 @@ AUTH_USER_MODEL = 'authentication.User'
 # Site Framework (required for allauth)
 SITE_ID = 1
 
+# Site name and domain for email templates
+SITE_NAME = "SereneMind"
+SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'localhost:8000')
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -199,6 +201,35 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ============================================
+# Email Configuration
+# ============================================
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" if APP_ENV in ["prod", "stage"] else "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@localhost')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+if APP_ENV in ["stage", "prod"]:
+    # In production, only require email settings
+    EMAIL_HOST = os.environ.get('EMAIL_HOST')
+    EMAIL_PORT = os.environ.get('EMAIL_PORT')
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+    required_email = {
+        "EMAIL_HOST": EMAIL_HOST,
+        "EMAIL_PORT": EMAIL_PORT,
+        "EMAIL_USE_TLS": EMAIL_USE_TLS,
+        "EMAIL_HOST_USER": EMAIL_HOST_USER,
+        "EMAIL_HOST_PASSWORD": EMAIL_HOST_PASSWORD,
+        "DEFAULT_FROM_EMAIL": DEFAULT_FROM_EMAIL,
+    }
+    missing = [name for name, val in required_email.items() if not val]
+    if missing:
+        raise ImproperlyConfigured(
+            f"Missing required email settings: {', '.join(missing)}"
+        )
+# ============================================
 # ALLAUTH CONFIGURATION (Updated to new format)
 # ============================================
 
@@ -206,19 +237,34 @@ AUTH_PASSWORD_VALIDATORS = [
 ACCOUNT_LOGIN_METHODS = {'email'}  # Email-only login (no username)
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # Disable username completely
 
-# Email verification (DISABLED - future feature)
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification for now
+# Email verification
+ACCOUNT_AUTHENTICATION_METHOD = "email"  # Required for email-based authentication
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disabled - users don't need email verification
+ACCOUNT_PREVENT_ENUMERATION = True
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_EMAIL_NOTIFICATIONS = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[SereneMind] "
+EMAIL_SUBJECT_PREFIX = "[SereneMind] "
 
+# Make headless emails link to your frontend:
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:8000')
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": FRONTEND_URL + "/account/verify-email/{key}",
+    "account_reset_password": FRONTEND_URL + "/account/password/reset",
+    "account_reset_password_from_key": FRONTEND_URL + "/account/password/reset/key/{key}",
+    "account_signup": FRONTEND_URL + "/account/signup",
+}
+
+# PASSWORD RESET FIELDS
+ACCOUNT_PASSWORD_RESET_BY_CODE_TIMEOUT = 1800  # 30 minutes
 # Signup fields (NEW FORMAT)
 # Format: 'field' or 'field*' (asterisk = required)
 ACCOUNT_SIGNUP_FIELDS = [
     'email*',        # Required: Email address
-    'password*',    # Required: Password
+    'password1*',    # Required: Password
     'first_name*',   # Required: First name
     'last_name*',    # Required: Last name
 ]
-# Explicitly tell allauth we don't want username
-ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True
 
 # Session settings
@@ -252,8 +298,13 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if APP_ENV in ["prod", "stage"] else 'http'
 
 # Custom adapters
-ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'
-HEADLESS_ADAPTER = 'authentication.adapters.CustomHeadlessAdapter'
+# ACCOUNT_ADAPTER = 'authentication.adapters.CustomAccountAdapter'
+# HEADLESS_ADAPTER = 'authentication.adapters.CustomHeadlessAdapter'
+ACCOUNT_CHANGE_EMAIL = True
+
+# Custom signup form for additional fields (first_name, last_name)
+# This automatically works with both regular and headless signup
+ACCOUNT_SIGNUP_FORM_CLASS = 'authentication.forms.CustomSignupForm'
 
 # ============================================
 # ALLAUTH HEADLESS API CONFIGURATION

@@ -64,3 +64,42 @@ def signup(request):
     Signup view with email and password input
     """
     return render(request, 'account/signup.html')
+
+def password_reset(request):
+    """Password reset request view
+    Allows user to request a password reset email
+    """
+    return render(request, 'account/password_reset.html')
+
+def password_reset_confirm(request, key):
+    """Password reset confirm view (with key from email)
+    Validates the reset key before showing the form
+    """
+    import requests
+    from django.http import Http404
+    
+    # Validate the key by calling Allauth's GET endpoint with headers
+    try:
+        # Build the URL for key validation
+        base_url = request.build_absolute_uri('/')
+        validation_url = f"{base_url}_allauth/browser/v1/auth/password/reset"
+        
+        # Prepare headers with the key
+        headers = {
+            'X-Password-Reset-Key': key,
+            'Content-Type': 'application/json'
+        }
+        
+        # Make GET request to validate the key with headers
+        response = requests.get(validation_url, headers=headers)
+        
+        # If key is valid (200), render the page
+        if response.status_code == 200:
+            return render(request, 'account/password_reset_confirm.html')
+        else:
+            # Invalid key - return 404
+            raise Http404("Invalid or expired password reset link")
+            
+    except Exception as e:
+        # Any error validating the key - return 404
+        raise Http404("Invalid or expired password reset link")

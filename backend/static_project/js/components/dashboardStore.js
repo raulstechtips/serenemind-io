@@ -21,6 +21,10 @@ function defineDashboardStore() {
         selectedTemplate: null,
         noTemplateMessage: '',
         
+        // Template selection modal
+        showTemplateSelectModal: false,
+        availableTemplatesForDay: [],
+        
         // INITIALIZATION (idempotent)
         async init() {
             if (this._initialized) return;
@@ -111,31 +115,88 @@ function defineDashboardStore() {
         
         /**
          * Create schedule for the selected date
+         * Now opens template selection modal instead of auto-creating
          */
         async createSchedule() {
-            if (!this.hasTemplateForDay || !this.selectedTemplate) {
-                window.showToast('Cannot create schedule: No template for this weekday', 'error');
+            await this.openTemplateSelectModal();
+        },
+        
+        /**
+         * Open template selection modal
+         */
+        async openTemplateSelectModal() {
+            // Get weekday from selected date
+            const date = dateUtils.parseDate(this.selectedDate);
+            const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            // Filter templates that have this weekday
+            this.availableTemplatesForDay = this.templates.filter(t => 
+                t.weekdays && t.weekdays.includes(weekday)
+            );
+            
+            if (this.availableTemplatesForDay.length === 0) {
+                window.showToast('No templates assigned to ' + weekday, 'warning');
                 return;
             }
             
+            this.showTemplateSelectModal = true;
+        },
+        
+        /**
+         * Close template selection modal
+         */
+        closeTemplateSelectModal() {
+            this.showTemplateSelectModal = false;
+        },
+        
+        /**
+         * Create schedule with selected template
+         */
+        async createScheduleWithTemplate(templateId) {
             this.loading = true;
             this.error = null;
             
             try {
                 const response = await api.createDailyTaskList({ 
                     date: this.selectedDate,
-                    template_id: this.selectedTemplate.id
+                    template_id: templateId
                 });
+                
                 this.dailyTaskList = response;
                 this.tasks = response.tasks || [];
+                this.closeTemplateSelectModal();
                 window.showToast('Schedule created successfully!', 'success');
             } catch (error) {
                 this.error = error.message;
                 window.showToast(error.message, 'error');
-                console.error('Failed to create schedule:', error);
             } finally {
                 this.loading = false;
             }
+        },
+        
+        /**
+         * Delete schedule for the selected date
+         */
+        async deleteSchedule() {
+            if (!this.dailyTaskList) return;
+            
+            // Show confirmation using existing modal
+            window.showConfirmModal({
+                title: 'Delete Schedule',
+                message: 'Are you sure you want to delete this schedule? All tasks for this day will be removed.',
+                type: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                onConfirm: async () => {
+                    try {
+                        await api.deleteDailyTaskList(this.dailyTaskList.id);
+                        window.showToast('Schedule deleted successfully', 'success');
+                        await this.loadScheduleForDate(this.selectedDate);
+                    } catch (error) {
+                        window.showToast('Failed to delete schedule: ' + error.message, 'error');
+                    }
+                }
+            });
         },
         
         /**

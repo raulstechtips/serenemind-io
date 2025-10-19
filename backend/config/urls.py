@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from frontend.views import test_dashboard, master_tasks, templates, dashboard, login, signup
+from frontend.views import test_dashboard, master_tasks, templates, dashboard, login, signup, password_reset, password_reset_confirm
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -27,8 +27,10 @@ urlpatterns = [
     path("_allauth/", include("allauth.headless.urls")),
     path('account/login/', login, name='login'),
     path('account/signup/', signup, name='signup'),
+    path('account/password/reset/', password_reset, name='password_reset'),
+    path('account/password/reset/key/<str:key>/', password_reset_confirm, name='password_reset_confirm'),
     # Traditional allauth URLs (OPTIONAL: Can be removed since we use custom views + headless API)
-    # path('auth/', include('allauth.urls')),
+    path('auth/', include('allauth.urls')),
     
     # Custom account management URLs (profile, etc.)
     path('account/', include('authentication.urls')),

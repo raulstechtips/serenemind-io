@@ -107,7 +107,13 @@
                     
                     <!-- Task List -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Today's System Tasks</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Today's System Tasks</h3>
+                            <button @click="$store.dashboard.deleteSchedule()"
+                                    class="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500">
+                                Delete Schedule
+                            </button>
+                        </div>
                         
                         <!-- Sortable Task List Component -->
                         <div x-data="{
@@ -142,9 +148,8 @@
                                     
                                     // Update each task with its new order (gap-based: 10, 20, 30...)
                                     const promises = orderedIds.map((id, index) => {
-                                        const taskId = parseInt(id);
                                         const newOrder = (index + 1) * 10;
-                                        return $store.dashboard.updateTaskOrder(taskId, newOrder);
+                                        return $store.dashboard.updateTaskOrder(id, newOrder);
                                     });
                                     
                                     await Promise.all(promises);
@@ -354,9 +359,8 @@
                                 
                                 // Update each task with its new order (gap-based: 10, 20, 30...)
                                 const promises = orderedIds.map((id, index) => {
-                                    const taskId = parseInt(id);
                                     const newOrder = (index + 1) * 10;
-                                    return $store.adhocTasks.updateTaskOrder(taskId, newOrder);
+                                    return $store.adhocTasks.updateTaskOrder(id, newOrder);
                                 });
                                 
                                 await Promise.all(promises);
@@ -429,6 +433,9 @@
 {% endblock %}
 
 {% block modals %}
+<!-- Template Selection Modal -->
+{% include 'components/modal_select_template.html' %}
+
 <!-- Adhoc Task Edit Modal -->
 {% include 'components/modal_edit_adhoc.html' %}
 

@@ -26,6 +26,39 @@
   .sortable-drag {
     cursor: grabbing;
   }
+  
+  /* Weekly Overview Mini-Cards */
+  .template-mini-cards {
+    max-height: 8rem;  /* 128px */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;  /* Smooth scrolling on iOS */
+  }
+  
+  .mini-card {
+    min-height: 2.5rem;  /* 40px - touch-friendly */
+    transition: all 150ms ease;
+  }
+  
+  .mini-card:active {
+    transform: scale(0.98);
+  }
+  
+  /* Mobile optimization */
+  @media (max-width: 640px) {
+    .template-mini-cards {
+      max-height: 6rem;  /* Shorter on mobile */
+    }
+  }
+  
+  /* Scrollbar styling */
+  .template-mini-cards::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .template-mini-cards::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
 </style>
 {% endblock %}
 
@@ -53,7 +86,7 @@
   </div>
 
   <!-- Success Message -->
-  <div
+  <!-- <div
     x-show="$store.templateManager.successMessage"
     x-transition
     class="mb-4">
@@ -63,10 +96,10 @@
       </svg>
       <span x-text="$store.templateManager.successMessage"></span>
     </div>
-  </div>
+  </div> -->
 
   <!-- Error Message -->
-  <div
+  <!-- <div
     x-show="$store.templateManager.error"
     x-transition
     class="mb-4">
@@ -76,7 +109,7 @@
       </svg>
       <span x-text="$store.templateManager.error"></span>
     </div>
-  </div>
+  </div> -->
 
   <!-- Loading State -->
   <div x-show="$store.templateManager.loading">
@@ -98,22 +131,30 @@
       
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3">
         <template x-for="weekday in $store.templateManager.weekdays" :key="weekday">
-          <div>
-            <div
-              @click="$store.templateManager.selectTemplateByWeekday(weekday)"
-              class="text-center p-3 sm:p-4 rounded-lg border-2 transition-all cursor-pointer"
-              :class="$store.templateManager.weeklyOverview[weekday] ? 'border-blue-500 bg-blue-50 hover:bg-blue-100' : 'border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300'">
-              <div class="font-semibold text-xs sm:text-sm text-gray-700 mb-1 sm:mb-2" x-text="$store.templateManager.getWeekdayShort(weekday)"></div>
-              <template x-if="$store.templateManager.weeklyOverview[weekday]">
-                <div>
-                  <div class="text-xs text-blue-600 font-medium truncate" x-text="$store.templateManager.weeklyOverview[weekday].title"></div>
-                  <div class="text-xs text-gray-500 mt-1" x-text="$store.templateManager.weeklyOverview[weekday].taskCount + ' tasks'"></div>
+          <div class="border-2 border-gray-200 rounded-lg p-3 bg-white">
+            <!-- Weekday Header -->
+            <div class="font-semibold text-xs sm:text-sm text-gray-700 mb-2" x-text="$store.templateManager.getWeekdayShort(weekday)"></div>
+            
+            <!-- Template Mini-Cards (scrollable) -->
+            <div class="template-mini-cards space-y-1.5 max-h-32 overflow-y-auto">
+              <template x-for="template in $store.templateManager.weeklyOverview[weekday]" :key="template.id">
+                <div 
+                  @click="$store.templateManager.openEditModalById(template)"
+                  class="mini-card px-2 py-1.5 bg-blue-50 border border-blue-200 rounded text-xs cursor-pointer hover:bg-blue-100 transition-colors">
+                  <div class="font-medium text-blue-700 truncate" x-text="template.title"></div>
+                  <div class="text-gray-500 text-xs" x-text="template.taskCount + ' tasks'"></div>
                 </div>
               </template>
-              <template x-if="!$store.templateManager.weeklyOverview[weekday]">
-                <div class="text-xs text-gray-400">No template<br class="hidden sm:inline">Click to create</div>
-              </template>
             </div>
+            
+            <!-- Empty State -->
+            <template x-if="$store.templateManager.weeklyOverview[weekday].length === 0">
+              <div 
+                @click="$store.templateManager.selectTemplateByWeekday(weekday)"
+                class="text-xs text-gray-400 cursor-pointer hover:text-gray-600 text-center py-2">
+                No templates<br/>Click to create
+              </div>
+            </template>
           </div>
         </template>
       </div>

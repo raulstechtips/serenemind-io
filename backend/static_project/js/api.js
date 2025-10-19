@@ -163,6 +163,128 @@ const api = {
     },
     
     /**
+     * Request password reset (send email with reset link)
+     * @param {string} email - User's email address
+     * @returns {Promise<object>} - Password reset request response
+     */
+    async requestPasswordReset(email) {
+        try {
+            // Correct endpoint for requesting password reset - sends email with key
+            const response = await fetch('/_allauth/browser/v1/auth/password/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Password reset request API error:', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Confirm password reset with key from email
+     * @param {string} key - Reset key from email link
+     * @param {string} password - New password
+     * @returns {Promise<object>} - Password reset confirm response
+     */
+    async confirmPasswordReset(key, password) {
+        try {
+            // Endpoint for confirming password reset with key from email
+            const response = await fetch('/_allauth/browser/v1/auth/password/reset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ key, password })
+            });
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Password reset confirm API error:', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Change password (when logged in)
+     * @param {string} currentPassword - Current password
+     * @param {string} newPassword - New password
+     * @returns {Promise<object>} - Password change response
+     */
+    async changePassword(currentPassword, newPassword) {
+        try {
+            const response = await fetch('/_allauth/browser/v1/account/password/change', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword
+                })
+            });
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        } catch (error) {
+            console.error('Password change API error:', error);
+            throw error;
+        }
+    },
+    
+    /**
+     * Update email via allauth headless (for proper email change handling)
+     * Two-step process: 1) POST to add email, 2) PATCH to mark as primary
+     * @param {string} email - New email address
+     * @returns {Promise<object>} - Email update response
+     */
+    async updateEmail(email) {
+        try {
+            // Step 1: Add the new email (POST)
+            const addResponse = await fetch('/_allauth/browser/v1/account/email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email })
+            });
+            const addData = await addResponse.json();
+            
+            if (!addResponse.ok) {
+                return { ok: false, status: addResponse.status, data: addData };
+            }
+            
+            // Step 2: Mark the new email as primary (PATCH)
+            const primaryResponse = await fetch('/_allauth/browser/v1/account/email', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ email, primary: true })
+            });
+            const primaryData = await primaryResponse.json();
+            
+            return { ok: primaryResponse.ok, status: primaryResponse.status, data: primaryData };
+        } catch (error) {
+            console.error('Email update API error:', error);
+            throw error;
+        }
+    },
+    
+    /**
      * Get current user profile
      * @returns {Promise<object>} - User profile data
      */
@@ -208,7 +330,7 @@ const api = {
     
     /**
      * Get a specific task
-     * @param {number} id - Task ID
+     * @param {string} id - Task ID (UUID)
      * @returns {Promise<object>} - Task details
      */
     getTask(id) {
@@ -217,7 +339,7 @@ const api = {
     
     /**
      * Update a task
-     * @param {number} id - Task ID
+     * @param {string} id - Task ID (UUID)
      * @param {object} data - Task data {title: string}
      * @returns {Promise<object>} - Updated task
      */
@@ -230,7 +352,7 @@ const api = {
     
     /**
      * Delete a task
-     * @param {number} id - Task ID
+     * @param {string} id - Task ID (UUID)
      * @returns {Promise<object>} - Success response
      */
     deleteTask(id) {
@@ -265,7 +387,7 @@ const api = {
     
     /**
      * Get a specific template
-     * @param {number} id - Template ID
+     * @param {string} id - Template ID (UUID)
      * @returns {Promise<object>} - Template details with tasks
      */
     getTemplate(id) {
@@ -274,7 +396,7 @@ const api = {
     
     /**
      * Update a template
-     * @param {number} id - Template ID
+     * @param {string} id - Template ID (UUID)
      * @param {object} data - Template data {title: string, weekdays: array, tasks: array}
      * @returns {Promise<object>} - Updated template
      */
@@ -287,21 +409,13 @@ const api = {
     
     /**
      * Delete a template
-     * @param {number} id - Template ID
+     * @param {string} id - Template ID (UUID)
      * @returns {Promise<object>} - Success response
      */
     deleteTemplate(id) {
         return this.request(`/templates/${id}/`, {
             method: 'DELETE'
         });
-    },
-    
-    /**
-     * Get available weekdays (not assigned to any template)
-     * @returns {Promise<object>} - {available_weekdays: array, assigned_weekdays: object}
-     */
-    getAvailableWeekdays() {
-        return this.request('/templates/available-weekdays/');
     },
     
     // ==========================================
@@ -330,7 +444,7 @@ const api = {
     
     /**
      * Get a specific daily task list
-     * @param {number} id - Daily task list ID
+     * @param {string} id - Daily task list ID (UUID)
      * @returns {Promise<object>} - Daily task list details
      */
     getDailyTaskList(id) {
@@ -339,7 +453,7 @@ const api = {
     
     /**
      * Delete a daily task list
-     * @param {number} id - Daily task list ID
+     * @param {string} id - Daily task list ID (UUID)
      * @returns {Promise<object>} - Success response
      */
     deleteDailyTaskList(id) {
@@ -371,7 +485,7 @@ const api = {
     
     /**
      * Get a specific daily task
-     * @param {number} id - Daily task ID
+     * @param {string} id - Daily task ID (UUID)
      * @returns {Promise<object>} - Daily task details
      */
     getDailyTask(id) {
@@ -380,7 +494,7 @@ const api = {
     
     /**
      * Update a daily task
-     * @param {number} id - Daily task ID
+     * @param {string} id - Daily task ID (UUID)
      * @param {object} data - {title: string, order: number, completed: boolean}
      * @returns {Promise<object>} - Updated daily task
      */
@@ -393,7 +507,7 @@ const api = {
     
     /**
      * Delete a daily task
-     * @param {number} id - Daily task ID
+     * @param {string} id - Daily task ID (UUID)
      * @returns {Promise<object>} - Success response
      */
     deleteDailyTask(id) {
@@ -404,7 +518,7 @@ const api = {
     
     /**
      * Mark a daily task as complete
-     * @param {number} id - Daily task ID
+     * @param {string} id - Daily task ID (UUID)
      * @returns {Promise<object>} - Updated daily task
      */
     completeTask(id) {
@@ -415,7 +529,7 @@ const api = {
     
     /**
      * Mark a daily task as incomplete
-     * @param {number} id - Daily task ID
+     * @param {string} id - Daily task ID (UUID)
      * @returns {Promise<object>} - Updated daily task
      */
     uncompleteTask(id) {

@@ -103,8 +103,7 @@
         <!-- Weekday Picker -->
         <div x-data="{
           get selectedWeekdays() { return $store.templateBuilder.selectedWeekdays },
-          set selectedWeekdays(value) { $store.templateBuilder.selectedWeekdays = value },
-          get disabledWeekdays() { return $store.templateBuilder.disabledWeekdays }
+          set selectedWeekdays(value) { $store.templateBuilder.selectedWeekdays = value }
         }">
           {% include 'components/weekday_picker.html' %}
         </div>

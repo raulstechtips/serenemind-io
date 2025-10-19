@@ -101,17 +101,22 @@
                     {% endif %}
                 </div>
 
-                <!-- Remember Me Checkbox -->
-                <div class="flex items-center">
-                    <input 
-                        type="checkbox" 
-                        name="remember" 
-                        id="id_remember"
-                        class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                    >
-                    <label for="id_remember" class="ml-2 block text-sm text-gray-700">
-                        Remember me
-                    </label>
+                <!-- Remember Me Checkbox and Forgot Password -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            name="remember" 
+                            id="id_remember"
+                            class="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                        >
+                        <label for="id_remember" class="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
+                    </div>
+                    <a href="{% url 'password_reset' %}" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                        Forgot password?
+                    </a>
                 </div>
 
                 <!-- Non-field Errors -->

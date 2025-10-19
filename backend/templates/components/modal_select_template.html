@@ -1,0 +1,79 @@
+<!-- Template Selection Modal -->
+<!--
+  Usage: Include in dashboard page
+  Controlled by: $store.dashboard.showTemplateSelectModal
+  Displays templates available for the selected weekday
+-->
+
+<div x-data="{}"
+     x-show="$store.dashboard && $store.dashboard.showTemplateSelectModal"
+     x-cloak
+     @keydown.escape.window="$store.dashboard.closeTemplateSelectModal()"
+     class="fixed inset-0 z-50 overflow-y-auto"
+     style="display: none;"
+     aria-labelledby="template-select-title"
+     role="dialog"
+     aria-modal="true">
+  
+  <!-- Backdrop -->
+  <div x-show="$store.dashboard.showTemplateSelectModal"
+       x-transition:enter="ease-out duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="ease-in duration-200"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity">
+  </div>
+  
+  <!-- Modal Content -->
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div x-show="$store.dashboard.showTemplateSelectModal"
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="relative w-full max-w-md bg-white rounded-lg shadow-xl p-6">
+      
+      <!-- Header -->
+      <div class="mb-4">
+        <h3 id="template-select-title" class="text-lg font-semibold text-gray-900">Select Template</h3>
+        <p class="text-sm text-gray-600 mt-1">Choose a template to create your schedule for this day</p>
+      </div>
+      
+      <!-- Template List -->
+      <div class="space-y-2 mb-6 max-h-64 overflow-y-auto">
+        <template x-for="template in ($store.dashboard.availableTemplatesForDay || [])" :key="template.id">
+          <button @click="$store.dashboard.createScheduleWithTemplate(template.id)"
+                  type="button"
+                  class="w-full text-left px-4 py-3 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="font-medium text-gray-900" x-text="template.title"></div>
+            <div class="text-sm text-gray-500" x-text="(template.tasks ? template.tasks.length : 0) + ' tasks'"></div>
+          </button>
+        </template>
+        
+        <!-- Empty State -->
+        <template x-if="!$store.dashboard.availableTemplatesForDay || $store.dashboard.availableTemplatesForDay.length === 0">
+          <div class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p class="text-sm">No templates available for this day</p>
+          </div>
+        </template>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button @click="$store.dashboard.closeTemplateSelectModal()"
+                type="button"
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
