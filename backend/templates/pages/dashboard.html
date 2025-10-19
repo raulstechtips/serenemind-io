@@ -311,21 +311,6 @@
                     </div>
                 </template>
                 
-                <!-- Empty State -->
-                <template x-if="!$store.adhocTasks.loading && $store.adhocTasks.incompleteTasks.length === 0">
-                    <div class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        <p class="text-sm text-gray-500 mb-3">No to-do tasks</p>
-                        <button @click="$store.adhocTasks.openCreateModal()"
-                                class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                            + Add your first task
-                        </button>
-                    </div>
-                </template>
-                
                 <!-- Sortable Task List Component -->
                 <div x-data="{
                     sortableInstance: null,
@@ -381,20 +366,6 @@
                         this.hasChanges = false;
                     }
                 }">
-                    <!-- Empty State -->
-                    <template x-if="!$store.adhocTasks.loading && $store.adhocTasks.incompleteTasks.length === 0">
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                            <p class="text-sm text-gray-500 mb-3">No to-do tasks</p>
-                            <button @click="$store.adhocTasks.openCreateModal()"
-                                    class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                                + Add your first task
-                            </button>
-                        </div>
-                    </template>
                     
                     <!-- Task List with Save Button -->
                     <template x-if="$store.adhocTasks.incompleteTasks.length > 0">
@@ -438,6 +409,21 @@
                         </template>
                     </ul>
                 </div>
+                
+                <!-- Empty State -->
+                <template x-if="!$store.adhocTasks.loading && $store.adhocTasks.incompleteTasks.length === 0">
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <p class="text-sm text-gray-500 mb-3">No to-do tasks</p>
+                        <button @click="$store.adhocTasks.openCreateModal()"
+                                class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                            + Add your first task
+                        </button>
+                    </div>
+                </template>
                 
                 <!-- Error State -->
                 <template x-if="$store.adhocTasks.error">

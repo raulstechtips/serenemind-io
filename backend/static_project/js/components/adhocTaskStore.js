@@ -199,7 +199,8 @@ function defineAdhocTaskStore() {
                     await api.uncompleteTask(task.id);
                     // Move from completed to incomplete array (will be reordered by backend)
                     this.completedTasks = this.completedTasks.filter(t => t.id !== task.id);
-                    await this.reloadTasks(); // Reload to get proper order from backend
+                    this.incompleteTasks.push(task);
+                    // await this.reloadTasks(); // Reload to get proper order from backend
                 }
             } catch (error) {
                 // Revert on error
