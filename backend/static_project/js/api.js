@@ -545,10 +545,19 @@ const api = {
     /**
      * Get adhoc tasks
      * @param {boolean} completed - Filter by completion status (default: false)
+     * @param {string|null} date - Date string (YYYY-MM-DD) to filter completed tasks by completion date
      * @returns {Promise<Array>} - List of adhoc tasks
      */
-    getAdhocTasks(completed = false) {
-        return this.request(`/adhoc-tasks/?completed=${completed}`);
+    getAdhocTasks(completed = false, date = null) {
+        let url = `/adhoc-tasks/`;
+        
+        if (date) {
+            url += `?date=${date}&completed=${completed}`;
+        } else {
+            url += `?completed=${completed}`;
+        }
+        
+        return this.request(url);
     },
     
     /**

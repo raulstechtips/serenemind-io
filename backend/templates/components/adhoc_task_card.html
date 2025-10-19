@@ -19,14 +19,16 @@
          'opacity-60': task.completed
      }">
     
-    <!-- Drag Handle -->
-    <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 pt-0.5"
-         title="Drag to reorder">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M4 8h16M4 16h16"/>
-        </svg>
-    </span>
+    <!-- Drag Handle (only show for incomplete tasks) -->
+    <template x-if="!task.completed">
+        <span class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 pt-0.5"
+             title="Drag to reorder">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M4 8h16M4 16h16"/>
+            </svg>
+        </span>
+    </template>
     
     <!-- Checkbox -->
     <div class="flex-shrink-0 pt-0.5">

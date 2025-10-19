@@ -78,6 +78,11 @@ function defineDashboardStore() {
                 const response = await api.getDailyTaskListByDate(date);
                 this.dailyTaskList = response;
                 this.tasks = response.tasks || [];
+                
+                // Load adhoc tasks for this date
+                if (window.Alpine && Alpine.store('adhocTasks')) {
+                    await Alpine.store('adhocTasks').loadTasks(date);
+                }
             } catch (error) {
                 // Schedule doesn't exist for this date
                 if (error.message.includes('No daily task list found')) {
@@ -87,6 +92,11 @@ function defineDashboardStore() {
                 } else {
                     this.error = error.message;
                     console.error('Failed to load schedule:', error);
+                }
+                
+                // Still load adhoc tasks even if schedule doesn't exist
+                if (window.Alpine && Alpine.store('adhocTasks')) {
+                    await Alpine.store('adhocTasks').loadTasks(date);
                 }
             } finally {
                 this.loading = false;

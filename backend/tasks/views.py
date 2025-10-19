@@ -655,6 +655,10 @@ class DailyTaskCompleteView(View):
     def post(self, request, pk):
         # Ensure task belongs to current user
         task = get_object_or_404(DailyTask, pk=pk, user=request.user)
+        
+        if task.is_adhoc:
+            # Set order to 0 when completing task
+            task.order = 0
         task.mark_complete()
         
         return JsonResponse({
@@ -673,6 +677,19 @@ class DailyTaskIncompleteView(View):
         # Ensure task belongs to current user
         task = get_object_or_404(DailyTask, pk=pk, user=request.user)
         task.mark_incomplete()
+        
+        if task.is_adhoc:
+            # Reassign order to bottom of incomplete adhoc tasks
+            max_order = DailyTask.objects.filter(
+                user=request.user,
+                is_adhoc=True,
+                completed=False
+            ).aggregate(
+                max_order=Max('order')
+            )['max_order']
+            
+            task.order = (max_order or 0) + 10
+        task.save()
         
         return JsonResponse({
             'id': task.id,
@@ -693,17 +710,26 @@ class AdhocTaskListView(ListView):
     context_object_name = 'adhoc_tasks'
     
     def get_queryset(self):
-        # Get incomplete adhoc tasks FOR THIS USER
+        # Get parameters for filtering
+        date_param = self.request.GET.get('date')
         completed = self.request.GET.get('completed', 'false').lower() == 'true'
         
         # Filter by current user
         qs = DailyTask.objects.filter(user=self.request.user, is_adhoc=True)
         
-        if completed:
-            qs = qs.filter(completed=True).order_by('-completed_at')
+        if date_param:
+            # When date is provided, filter completed tasks by completion date
+            if completed:
+                qs = qs.filter(completed=True, completed_at__date=date_param).order_by('-completed_at')
+            else:
+                # For incomplete tasks, don't filter by date (show all incomplete)
+                qs = qs.filter(completed=False).order_by('order')
         else:
-            # Order by: order field first (for user-defined ordering), then due_date, then created_at
-            qs = qs.filter(completed=False).order_by('order', 'due_date', 'created_at')
+            # When no date provided, use completed parameter
+            if completed:
+                qs = qs.filter(completed=True).order_by('-completed_at')
+            else:
+                qs = qs.filter(completed=False).order_by('order')
         
         return qs
     

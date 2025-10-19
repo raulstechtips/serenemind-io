@@ -7,10 +7,12 @@
 function defineAdhocTaskStore() {
     Alpine.store('adhocTasks', {
         // STATE
-        tasks: [],
+        incompleteTasks: [],  // Separate array for incomplete tasks
+        completedTasks: [],   // Separate array for completed tasks
         loading: false,
         error: null,
         _initialized: false,
+        currentDate: null, // Track the selected date for filtering
         
         // Modal state
         editingTask: null,
@@ -20,21 +22,33 @@ function defineAdhocTaskStore() {
         async init() {
             if (this._initialized) return;
             this._initialized = true;
-            await this.loadTasks();
+            // Don't load tasks here - let the caller (dashboard) provide the date
         },
         
         // ACTIONS
         
         /**
-         * Load incomplete adhoc tasks
+         * Load adhoc tasks with optional date filtering
+         * @param {string|null} date - Date string (YYYY-MM-DD) to filter completed tasks, null for all incomplete
          */
-        async loadTasks() {
+        async loadTasks(date = null) {
             this.loading = true;
             this.error = null;
+            this.currentDate = date;
             
             try {
-                const response = await api.getAdhocTasks(false); // false = incomplete only
-                this.tasks = response.adhoc_tasks || [];
+                // Load incomplete tasks (always show all incomplete)
+                const incompleteResponse = await api.getAdhocTasks(false, null);
+                this.incompleteTasks = incompleteResponse.adhoc_tasks || [];
+                console.log('incompleteTasks', this.incompleteTasks);
+                // Load completed tasks (filtered by date if provided)
+                if (date) {
+                    const completedResponse = await api.getAdhocTasks(true, date);
+                    this.completedTasks = completedResponse.adhoc_tasks || [];
+                    console.log('completedTasks', this.completedTasks);
+                } else {
+                    this.completedTasks = [];
+                }
             } catch (error) {
                 this.error = error.message;
                 console.error('Failed to load adhoc tasks:', error);
@@ -161,7 +175,7 @@ function defineAdhocTaskStore() {
          * Reload tasks (for after reordering)
          */
         async reloadTasks() {
-            await this.loadTasks();
+            await this.loadTasks(this.currentDate);
         },
         
         /**
@@ -178,9 +192,14 @@ function defineAdhocTaskStore() {
             try {
                 if (task.completed) {
                     await api.completeTask(task.id);
-                    // Don't remove from list immediately - stays visible until page reload
+                    // Move from incomplete to completed array
+                    this.incompleteTasks = this.incompleteTasks.filter(t => t.id !== task.id);
+                    this.completedTasks.unshift(task);
                 } else {
                     await api.uncompleteTask(task.id);
+                    // Move from completed to incomplete array (will be reordered by backend)
+                    this.completedTasks = this.completedTasks.filter(t => t.id !== task.id);
+                    await this.reloadTasks(); // Reload to get proper order from backend
                 }
             } catch (error) {
                 // Revert on error
@@ -207,13 +226,6 @@ function defineAdhocTaskStore() {
         },
         
         // GETTERS
-        
-        /**
-         * Get incomplete adhoc tasks
-         */
-        get incompleteTasks() {
-            return this.tasks.filter(t => !t.completed);
-        },
         
         /**
          * Get overdue tasks
