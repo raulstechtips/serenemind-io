@@ -340,6 +340,58 @@ function defineTemplateManagerStore() {
     },
     
     /**
+     * Open duplicate template modal
+     */
+    openDuplicateModal(template) {
+      window.showDuplicateTemplateModal({
+        templateId: template.id,
+        originalName: template.title,
+        onSuccess: async () => {
+          // Success is already handled in duplicateTemplate method
+        }
+      });
+    },
+
+    /**
+     * Duplicate template with new name
+     * @param {string} templateId - Template ID to duplicate
+     * @param {string} newName - New name for the duplicated template
+     */
+    async duplicateTemplate(templateId, newName) {
+      if (!templateId || !newName) return;
+      
+      try {
+        // Fetch the full template data
+        const originalTemplate = await api.getTemplate(templateId);
+        
+        // Prepare payload with new name but same structure
+        const payload = {
+          title: newName,
+          weekdays: originalTemplate.weekdays || [],
+          tasks: (originalTemplate.tasks || []).map(t => ({
+            task_id: t.id,  // The actual task ID
+            order: t.order  // Preserve the exact same order from original
+          }))
+        };
+        
+        // Create the duplicate template
+        await api.createTemplate(payload);
+        
+        // Show success message
+        this.showSuccess(`Template "${newName}" created successfully`);
+        
+        // Reload templates to show the new duplicate
+        await this.loadTemplates();
+        
+      } catch (error) {
+        console.error('Error duplicating template:', error);
+        const errorMsg = error.message || 'Failed to duplicate template';
+        this.showError(errorMsg);
+        throw error; // Re-throw so modal can handle it
+      }
+    },
+    
+    /**
      * Delete template
      */
     async deleteTemplate(templateId) {

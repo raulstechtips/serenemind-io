@@ -1,0 +1,236 @@
+<!-- Duplicate Template Modal Component -->
+<div 
+    x-data="duplicateTemplateModal()"
+    x-show="show"
+    x-cloak
+    @duplicate-template-modal.window="open($event.detail)"
+    class="fixed inset-0 z-50 overflow-y-auto"
+    style="display: none;"
+>
+    <!-- Backdrop -->
+    <div 
+        x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="cancel()"
+        class="fixed inset-0 bg-black bg-opacity-50"
+    ></div>
+    
+    <!-- Modal Content -->
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div 
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform scale-90"
+            x-transition:enter-end="opacity-100 transform scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform scale-100"
+            x-transition:leave-end="opacity-0 transform scale-90"
+            class="relative bg-white rounded-lg shadow-xl max-w-md w-full"
+        >
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Duplicate Template</h3>
+                <button 
+                    @click="cancel()"
+                    class="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <form @submit.prevent="save()" class="px-6 py-4">
+                <!-- Error Message -->
+                <div x-show="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm text-red-800" x-text="error"></p>
+                </div>
+                
+                <!-- Original Template Info -->
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p class="text-xs text-gray-600 mb-1">Duplicating template:</p>
+                    <p class="text-sm font-medium text-gray-900" x-text="originalTemplateName"></p>
+                </div>
+                
+                <!-- New Template Name Input -->
+                <div class="mb-4">
+                    <label for="duplicate-template-name" class="block text-sm font-medium text-gray-700 mb-2">
+                        New Template Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="duplicate-template-name"
+                        x-model="newTemplateName"
+                        placeholder="Enter new template name..."
+                        required
+                        maxlength="200"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        x-ref="nameInput"
+                    >
+                    <p class="mt-1 text-xs text-gray-500">
+                        <span x-text="newTemplateName.length"></span>/200 characters
+                    </p>
+                </div>
+                
+                <!-- Help Text -->
+                <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p class="text-xs text-gray-700">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        The duplicate will include all tasks, weekdays, and task order from the original template.
+                    </p>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex space-x-3 pt-4">
+                    <!-- Cancel Button -->
+                    <button 
+                        @click="cancel()"
+                        type="button"
+                        class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                        :disabled="loading"
+                    >
+                        Cancel
+                    </button>
+                    
+                    <!-- Duplicate Button -->
+                    <button 
+                        type="submit"
+                        class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="loading || !newTemplateName.trim()"
+                    >
+                        <span x-show="!loading">Create Duplicate</span>
+                        <span x-show="loading" class="flex items-center justify-center">
+                            <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Creating...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * Duplicate Template Modal Component
+ * Alpine.js component for duplicating templates with a new name
+ */
+function duplicateTemplateModal() {
+    return {
+        show: false,
+        loading: false,
+        error: '',
+        templateId: null,
+        originalTemplateName: '',
+        newTemplateName: '',
+        onSuccess: null,
+        
+        /**
+         * Open modal
+         * @param {object} detail - {templateId, originalName, onSuccess}
+         */
+        open(detail = {}) {
+            this.templateId = detail.templateId;
+            this.originalTemplateName = detail.originalName || '';
+            this.newTemplateName = detail.originalName ? `${detail.originalName} (Copy)` : '';
+            this.onSuccess = detail.onSuccess || null;
+            this.error = '';
+            this.show = true;
+            
+            // Focus input after modal opens
+            this.$nextTick(() => {
+                this.$refs.nameInput.focus();
+                this.$refs.nameInput.select(); // Select the text for easy editing
+            });
+        },
+        
+        /**
+         * Save (duplicate template)
+         */
+        async save() {
+            if (!this.newTemplateName.trim()) {
+                this.error = 'Template name is required';
+                return;
+            }
+            
+            this.loading = true;
+            this.error = '';
+            
+            try {
+                // Call the templateManager store method to handle duplication
+                const result = await Alpine.store('templateManager').duplicateTemplate(
+                    this.templateId, 
+                    this.newTemplateName.trim()
+                );
+                
+                // Call success callback if provided
+                if (this.onSuccess) {
+                    await this.onSuccess(result);
+                }
+                
+                // Close modal
+                this.close();
+                
+            } catch (error) {
+                console.error('Error duplicating template:', error);
+                this.error = error.message || 'Failed to duplicate template. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        /**
+         * Cancel and close modal
+         */
+        cancel() {
+            if (!this.loading) {
+                this.close();
+            }
+        },
+        
+        /**
+         * Close modal
+         */
+        close() {
+            this.show = false;
+            
+            // Reset after animation
+            setTimeout(() => {
+                this.templateId = null;
+                this.originalTemplateName = '';
+                this.newTemplateName = '';
+                this.error = '';
+                this.loading = false;
+                this.onSuccess = null;
+            }, 200);
+        }
+    }
+}
+
+/**
+ * Helper function to show duplicate template modal
+ * Usage: showDuplicateTemplateModal({ templateId: '...', originalName: '...', onSuccess: async (template) => {...} })
+ */
+window.showDuplicateTemplateModal = function(config = {}) {
+    window.dispatchEvent(new CustomEvent('duplicate-template-modal', { 
+        detail: config 
+    }));
+}
+</script>
+
+<style>
+[x-cloak] {
+    display: none !important;
+}
+</style>

@@ -176,9 +176,19 @@
         <!-- Template Cards Grid -->
         <div x-show="$store.templateManager.hasTemplates" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <template x-for="template in $store.templateManager.templates" :key="template.id">
-            <div class="border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all">
+            <div class="border border-gray-200 rounded-lg p-5 hover:border-blue-300 hover:shadow-md transition-all relative">
+              <!-- Duplicate Button (Top Right Corner) -->
+              <button
+                  @click="$store.templateManager.openDuplicateModal(template)"
+                  class="absolute top-3 right-3 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Duplicate template">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+              </button>
+              
               <!-- Card Header -->
-              <div class="flex items-start justify-between mb-3">
+              <div class="flex items-start justify-between mb-3 pr-8">
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold text-gray-900" x-text="template.title"></h3>
                   <p class="text-xs text-gray-500 mt-1" x-text="$store.templateManager.formatWeekdays(template.weekdays)"></p>
@@ -218,6 +228,9 @@
 {% block modals %}
 <!-- Template Builder Modal -->
 {% include 'components/modal_template_builder.html' %}
+
+<!-- Duplicate Template Modal -->
+{% include 'components/modal_duplicate_template.html' %}
 
 <!-- Create Task Modal (shared with template builder) -->
 {% include 'components/modal_create_task.html' %}
