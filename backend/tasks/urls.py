@@ -12,6 +12,13 @@ urlpatterns = [
     path('tasks/<uuid:pk>/', views.TaskDetailView.as_view(), name='task-detail'),
     
     # ============================================
+    # LABEL URLS
+    # ============================================
+    path('labels/', views.LabelListView.as_view(), name='label-list'),
+    path('labels/create/', views.LabelCreateView.as_view(), name='label-create'),
+    path('labels/<uuid:pk>/', views.LabelDetailView.as_view(), name='label-detail'),
+    
+    # ============================================
     # TEMPLATE URLS
     # ============================================
     path('templates/', views.TemplateListView.as_view(), name='template-list'),

@@ -17,9 +17,41 @@ function defineAdhocTaskStore() {
         editingTask: null,
         showEditModal: false,
         
+        // Form state for modal
+        formState: {
+            title: '',
+            due_date: '',
+            label_id: null
+        },
+        
+        // Label filter state
+        activeLabelFilters: [],  // Array of label IDs to filter by
+        
         get selectedDate() {
             const dashboardStore = Alpine.store('dashboard');
             return dashboardStore?.selectedDate || null;
+        },
+
+        get availableLabels() {
+            // Get unique labels from incomplete tasks
+            const labelMap = new Map();
+            this.incompleteTasks.forEach(task => {
+                task.labels?.forEach(label => {
+                    if (!labelMap.has(label.id)) {
+                        labelMap.set(label.id, label);
+                    }
+                });
+            });
+            return Array.from(labelMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+        },
+
+        get filteredIncompleteTasks() {
+            if (this.activeLabelFilters.length === 0) {
+                return this.incompleteTasks;
+            }
+            return this.incompleteTasks.filter(task => 
+                task.labels?.some(label => this.activeLabelFilters.includes(label.id))
+            );
         },
 
         // INITIALIZATION (idempotent)
@@ -71,6 +103,14 @@ function defineAdhocTaskStore() {
          */
         openCreateModal() {
             this.editingTask = null;
+            
+            // Initialize form state for new task
+            this.formState = {
+                title: '',
+                due_date: new Date().toISOString().split('T')[0], // Today's date
+                label_id: null
+            };
+            
             this.showEditModal = true;
         },
         
@@ -80,15 +120,31 @@ function defineAdhocTaskStore() {
          */
         openEditModal(task) {
             this.editingTask = { ...task }; // Clone to avoid direct mutation
+            
+            // Initialize form state
+            this.formState = {
+                title: task.title || '',
+                due_date: task.due_date || '',
+                label_id: task.labels?.[0]?.id || null
+            };
+            
             this.showEditModal = true;
         },
         
         /**
-         * Close edit modal
+         * Close edit modal and reset form state
          */
         closeEditModal() {
             this.showEditModal = false;
             this.editingTask = null;
+            this.error = null; // Clear any error messages
+            
+            // Reset form state
+            this.formState = {
+                title: '',
+                due_date: '',
+                label_id: null
+            };
         },
         
         /**
@@ -229,12 +285,16 @@ function defineAdhocTaskStore() {
          * @param {object} formData - Form data {title, due_date}
          */
         async submitForm(formData) {
+            const payload = {
+                title: formData.title,
+                due_date: formData.due_date,
+                label_id: formData.label_id || null  // Single label ID
+            };
+            
             if (this.editingTask && this.editingTask.id) {
-                // Update existing task
-                await this.updateTask(this.editingTask.id, formData);
+                await this.updateTask(this.editingTask.id, payload);
             } else {
-                // Create new task
-                await this.createTask(formData);
+                await this.createTask(payload);
             }
         },
         
@@ -269,6 +329,26 @@ function defineAdhocTaskStore() {
          */
         formatDueDate(dateStr) {
             return dateUtils.formatDateMedium(dateStr);
+        },
+
+        /**
+         * Toggle label filter
+         * @param {string} labelId - Label ID to toggle
+         */
+        toggleLabelFilter(labelId) {
+            const index = this.activeLabelFilters.indexOf(labelId);
+            if (index > -1) {
+                this.activeLabelFilters.splice(index, 1);
+            } else {
+                this.activeLabelFilters.push(labelId);
+            }
+        },
+
+        /**
+         * Clear all label filters
+         */
+        clearLabelFilters() {
+            this.activeLabelFilters = [];
         }
     });
 }

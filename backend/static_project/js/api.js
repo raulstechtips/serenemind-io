@@ -582,6 +582,63 @@ const api = {
      */
     getCompletionStats() {
         return this.request('/analytics/completion-stats/');
+    },
+
+    // ==========================================
+    // LABEL ENDPOINTS
+    // ==========================================
+
+    /**
+     * Get all user's labels
+     * @returns {Promise<Array>} - List of labels
+     */
+    getLabels() {
+        return this.request('/labels/');
+    },
+
+    /**
+     * Create a new label
+     * @param {object} data - {name: string, color: string (hex)}
+     * @returns {Promise<object>} - Created label
+     */
+    createLabel(data) {
+        return this.request('/labels/create/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    /**
+     * Get a specific label
+     * @param {string} id - Label ID (UUID)
+     * @returns {Promise<object>} - Label details
+     */
+    getLabel(id) {
+        return this.request(`/labels/${id}/`);
+    },
+
+    /**
+     * Update a label
+     * @param {string} id - Label ID (UUID)
+     * @param {object} data - {name: string, color: string (hex)}
+     * @returns {Promise<object>} - Updated label
+     */
+    updateLabel(id, data) {
+        return this.request(`/labels/${id}/`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+
+    /**
+     * Delete a label
+     * @param {string} id - Label ID (UUID)
+     * @returns {Promise<object>} - Success response
+     */
+    deleteLabel(id) {
+        return this.request(`/labels/${id}/`, {
+            method: 'DELETE'
+        });
     }
 };
 

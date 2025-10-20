@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 import json
 
-from .models import Task, Template, TemplateTask, DailyTaskList, DailyTask, Weekday
+from .models import Task, Template, TemplateTask, DailyTaskList, DailyTask, Weekday, Label
 
 
 # ============================================
@@ -137,6 +137,132 @@ class TaskDetailView(View):
             'message': f'Task deleted. Removed from {template_count} template(s).',
             'template_count': template_count
         }, status=200)
+
+
+# ============================================
+# LABEL VIEWS
+# ============================================
+
+@method_decorator(login_required, name='dispatch')
+class LabelListView(ListView):
+    """List all user's labels"""
+    model = Label
+    context_object_name = 'labels'
+    
+    def get_queryset(self):
+        return Label.objects.filter(user=self.request.user).order_by('name')
+    
+    def render_to_response(self, context, **response_kwargs):
+        labels_data = [
+            {
+                'id': str(label.id),
+                'name': label.name,
+                'color': label.color,
+                'created_at': label.created_at,
+                'updated_at': label.updated_at
+            }
+            for label in context['labels']
+        ]
+        return JsonResponse({'labels': labels_data}, safe=False)
+
+
+@method_decorator(login_required, name='dispatch')
+class LabelCreateView(View):
+    """Create a new label"""
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            name = data.get('name', '').strip()[:50]
+            color = data.get('color', '#E5E7EB').strip()
+            
+            if not name:
+                return JsonResponse({'error': 'Label name is required'}, status=400)
+            
+            # Validate color format
+            if color:
+                import re
+                if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+                    return JsonResponse({
+                        'error': 'Invalid color format. Use #RRGGBB'
+                    }, status=400)
+            
+            # Check if label already exists for this user
+            if Label.objects.filter(user=request.user, name=name).exists():
+                return JsonResponse({
+                    'error': f'Label "{name}" already exists'
+                }, status=400)
+            
+            label = Label.objects.create(
+                user=request.user,
+                name=name,
+                color=color
+            )
+            
+            return JsonResponse({
+                'id': str(label.id),
+                'name': label.name,
+                'color': label.color,
+                'created_at': label.created_at,
+                'updated_at': label.updated_at
+            }, status=201)
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@method_decorator(login_required, name='dispatch')
+class LabelDetailView(View):
+    """Get, update, or delete a specific label"""
+    
+    def get(self, request, pk):
+        label = get_object_or_404(Label, pk=pk, user=request.user)
+        return JsonResponse({
+            'id': str(label.id),
+            'name': label.name,
+            'color': label.color,
+            'created_at': label.created_at,
+            'updated_at': label.updated_at
+        })
+    
+    def put(self, request, pk):
+        label = get_object_or_404(Label, pk=pk, user=request.user)
+        try:
+            data = json.loads(request.body)
+            
+            if 'name' in data:
+                new_name = data['name'].strip()[:50]
+                if not new_name:
+                    return JsonResponse({'error': 'Name cannot be empty'}, status=400)
+                # Check uniqueness (excluding current label)
+                if Label.objects.filter(user=request.user, name=new_name).exclude(pk=pk).exists():
+                    return JsonResponse({'error': f'Label "{new_name}" already exists'}, status=400)
+                label.name = new_name
+            
+            if 'color' in data:
+                color = data['color'].strip()
+                if color:
+                    import re
+                    if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+                        return JsonResponse({'error': 'Invalid color format'}, status=400)
+                label.color = color
+            
+            label.save()
+            
+            return JsonResponse({
+                'id': str(label.id),
+                'name': label.name,
+                'color': label.color,
+                'updated_at': label.updated_at
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    def delete(self, request, pk):
+        label = get_object_or_404(Label, pk=pk, user=request.user)
+        label.delete()
+        return JsonResponse({'message': 'Label deleted successfully'})
 
 
 # ============================================
@@ -573,7 +699,15 @@ class DailyTaskDetailView(View):
             'due_date': task.due_date,
             'is_adhoc': task.is_adhoc,
             'created_at': task.created_at,
-            'updated_at': task.updated_at
+            'updated_at': task.updated_at,
+            'labels': [                                # NEW
+                {
+                    'id': str(label.id),
+                    'name': label.name,
+                    'color': label.color
+                }
+                for label in task.labels.all()
+            ]
         }
         
         if task.daily_task_list:
@@ -606,6 +740,16 @@ class DailyTaskDetailView(View):
             if 'order' in data:
                 task.order = int(data['order'])
             
+            # NEW: Update label assignment
+            if 'label_id' in data:
+                # Clear existing labels
+                task.labels.clear()
+                # Add new label if provided
+                label_id = data['label_id']
+                if label_id:
+                    label = get_object_or_404(Label, id=label_id, user=request.user)
+                    task.labels.add(label)
+            
             if 'completed' in data:
                 if data['completed'] and not task.completed:
                     # Mark as complete
@@ -626,7 +770,11 @@ class DailyTaskDetailView(View):
                 'completed': task.completed,
                 'completed_at': task.completed_at,
                 'due_date': task.due_date,
-                'updated_at': task.updated_at
+                'updated_at': task.updated_at,
+                'labels': [
+                    {'id': str(l.id), 'name': l.name, 'color': l.color}
+                    for l in task.labels.all()
+                ]
             })
             
         except Exception as e:
@@ -739,7 +887,15 @@ class AdhocTaskListView(ListView):
                 'completed_at': task.completed_at,
                 'created_at': task.created_at,
                 'order': task.order,  # Include order for drag-drop sorting
-                'is_adhoc': task.is_adhoc
+                'is_adhoc': task.is_adhoc,
+                'labels': [                              # NEW: Return array of labels
+                    {
+                        'id': str(label.id),
+                        'name': label.name,
+                        'color': label.color
+                    }
+                    for label in task.labels.all()
+                ]
             }
             for task in context['adhoc_tasks']
         ]
@@ -756,12 +912,18 @@ class AdhocTaskCreateView(View):
             data = json.loads(request.body)
             title = data.get('title', '').strip()
             due_date = data.get('due_date')
+            label_id = data.get('label_id')  # NEW: Single label ID from frontend
             
             if not title:
                 return JsonResponse({'error': 'Title is required'}, status=400)
             
             if not due_date:
                 return JsonResponse({'error': 'Due date is required'}, status=400)
+            
+            # Validate label belongs to user (if provided)
+            if label_id:
+                if not Label.objects.filter(id=label_id, user=request.user).exists():
+                    return JsonResponse({'error': 'Invalid label'}, status=400)
             
             # Get the highest order number for existing adhoc tasks FOR THIS USER
             max_order = DailyTask.objects.filter(
@@ -787,6 +949,10 @@ class AdhocTaskCreateView(View):
                 completed=False
             )
             
+            # Assign label (many-to-many)
+            if label_id:
+                task.labels.add(label_id)
+            
             return JsonResponse({
                 'id': task.id,
                 'title': task.title,
@@ -795,7 +961,11 @@ class AdhocTaskCreateView(View):
                 'completed': task.completed,
                 'completed_at': task.completed_at,
                 'created_at': task.created_at,
-                'order': task.order
+                'order': task.order,
+                'labels': [
+                    {'id': str(l.id), 'name': l.name, 'color': l.color}
+                    for l in task.labels.all()
+                ]
             }, status=201)
             
         except Exception as e:

@@ -64,6 +64,18 @@
             </div>
         </template>
         
+        <!-- Label Badge (show first label) -->
+        <template x-if="task.labels && task.labels.length > 0">
+            <span 
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mb-1"
+                :style="{ 
+                    backgroundColor: task.labels[0].color || '#E5E7EB',
+                    color: '#1F2937'
+                }"
+                x-text="task.labels[0].name">
+            </span>
+        </template>
+        
         <!-- Task Title -->
         <p class="text-sm font-medium text-gray-900"
            :class="{ 'line-through text-gray-500': task.completed }"

@@ -37,6 +37,42 @@ class Task(models.Model):
         ordering = ['title']
 
 
+class Label(models.Model):
+    """User-defined labels for categorizing tasks"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='labels',
+        help_text=_('User who owns this label')
+    )
+    name = models.CharField(max_length=50)
+    color = models.CharField(
+        max_length=7,
+        default='#E5E7EB',
+        help_text='Hex color code #RRGGBB'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['name']
+        unique_together = ['user', 'name']  # Label names unique per user
+    
+    def __str__(self):
+        return f"{self.name} ({self.user.email})"
+    
+    def clean(self):
+        """Validate color is valid hex"""
+        super().clean()
+        if self.color:
+            import re
+            if not re.match(r'^#[0-9A-Fa-f]{6}$', self.color):
+                raise ValidationError({
+                    'color': 'Color must be in #RRGGBB format (e.g., #FDE68A)'
+                })
+
+
 class Template(models.Model):
     """Daily task templates - owned by specific users"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -177,6 +213,14 @@ class DailyTask(models.Model):
     
     # Task type
     is_adhoc = models.BooleanField(default=False)
+    
+    # Many-to-many relationship with labels
+    labels = models.ManyToManyField(
+        Label,
+        related_name='tasks',
+        blank=True,
+        help_text='Labels assigned to this task'
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
