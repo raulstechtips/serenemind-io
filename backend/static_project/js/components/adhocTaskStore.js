@@ -12,12 +12,16 @@ function defineAdhocTaskStore() {
         loading: false,
         error: null,
         _initialized: false,
-        currentDate: null, // Track the selected date for filtering
-        
+
         // Modal state
         editingTask: null,
         showEditModal: false,
         
+        get selectedDate() {
+            const dashboardStore = Alpine.store('dashboard');
+            return dashboardStore?.selectedDate || null;
+        },
+
         // INITIALIZATION (idempotent)
         async init() {
             if (this._initialized) return;
@@ -34,18 +38,23 @@ function defineAdhocTaskStore() {
         async loadTasks(date = null) {
             this.loading = true;
             this.error = null;
-            this.currentDate = date;
             
             try {
                 // Load incomplete tasks (always show all incomplete)
                 const incompleteResponse = await api.getAdhocTasks(false, null);
                 this.incompleteTasks = incompleteResponse.adhoc_tasks || [];
-                console.log('incompleteTasks', this.incompleteTasks);
                 // Load completed tasks (filtered by date if provided)
                 if (date) {
-                    const completedResponse = await api.getAdhocTasks(true, date);
-                    this.completedTasks = completedResponse.adhoc_tasks || [];
-                    console.log('completedTasks', this.completedTasks);
+                    const nextDate = dateUtils.formatDate(dateUtils.getNextDay(date));
+                    const datesToFetch = [date, nextDate];
+                    const allCompletedTasks = [];
+
+                    // Fetch tasks for each date
+                    for (const fetchDate of datesToFetch) {
+                        const completedResponse = await api.getAdhocTasks(true, fetchDate);
+                        allCompletedTasks.push(...(completedResponse.adhoc_tasks || []));
+                    }
+                    this.completedTasks = allCompletedTasks.filter(t => dateUtils.formatDate(t.completed_at) === date);
                 } else {
                     this.completedTasks = [];
                 }
@@ -92,7 +101,7 @@ function defineAdhocTaskStore() {
             
             try {
                 await api.createAdhocTask(taskData);
-                await this.loadTasks();
+                await this.loadTasks(this.selectedDate);
                 this.closeEditModal();
                 window.showToast('Adhoc task created successfully!', 'success');
             } catch (error) {
@@ -115,7 +124,7 @@ function defineAdhocTaskStore() {
             
             try {
                 await api.updateDailyTask(taskId, updates);
-                await this.loadTasks();
+                await this.loadTasks(this.selectedDate);
                 this.closeEditModal();
                 window.showToast('Adhoc task updated successfully!', 'success');
             } catch (error) {
@@ -146,7 +155,11 @@ function defineAdhocTaskStore() {
             
             try {
                 await api.deleteDailyTask(task.id);
-                await this.loadTasks();
+                if (task.completed) {
+                    this.completedTasks = this.completedTasks.filter(t => t.id !== task.id);
+                } else {
+                    this.incompleteTasks = this.incompleteTasks.filter(t => t.id !== task.id);
+                }
                 window.showToast('Adhoc task deleted successfully!', 'success');
             } catch (error) {
                 this.error = error.message;
@@ -175,7 +188,7 @@ function defineAdhocTaskStore() {
          * Reload tasks (for after reordering)
          */
         async reloadTasks() {
-            await this.loadTasks(this.currentDate);
+            await this.loadTasks(this.selectedDate);
         },
         
         /**
@@ -200,7 +213,6 @@ function defineAdhocTaskStore() {
                     // Move from completed to incomplete array (will be reordered by backend)
                     this.completedTasks = this.completedTasks.filter(t => t.id !== task.id);
                     this.incompleteTasks.push(task);
-                    // await this.reloadTasks(); // Reload to get proper order from backend
                 }
             } catch (error) {
                 // Revert on error
