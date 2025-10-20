@@ -190,10 +190,6 @@ class TemplateCreateView(View):
             if not title:
                 return JsonResponse({'error': 'Title is required'}, status=400)
             
-            # Validate weekdays
-            if not weekdays:
-                return JsonResponse({'error': 'At least one weekday is required'}, status=400)
-            
             for day in weekdays:
                 if day not in Weekday.values:
                     return JsonResponse({'error': f'Invalid weekday: {day}'}, status=400)

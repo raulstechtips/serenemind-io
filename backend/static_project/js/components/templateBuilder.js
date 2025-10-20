@@ -272,19 +272,6 @@ function defineTemplateBuilderStore() {
         return false;
       }
       
-      if (this.selectedWeekdays.length === 0) {
-        const errorMsg = 'Please select at least one weekday';
-        this.error = errorMsg;
-        window.dispatchEvent(new CustomEvent('show-toast', {
-          detail: {
-            message: errorMsg,
-            type: 'warning',
-            duration: 3000
-          }
-        }));
-        return false;
-      }
-      
       if (this.templateTasks.length === 0) {
         const errorMsg = 'Please add at least one task to the template';
         this.error = errorMsg;
@@ -385,8 +372,7 @@ function defineTemplateBuilderStore() {
      * GETTERS
      */
     get canSave() {
-      return this.templateName.trim() && 
-             this.selectedWeekdays.length > 0 && 
+      return this.templateName.trim() &&  
              this.templateTasks.length > 0 &&
              !this.saving;
     }
